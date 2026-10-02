@@ -4,7 +4,7 @@ import ControlDeck from './components/ControlDeck';
 import MetricsPanel from './components/MetricsPanel';
 import EventLog from './components/EventLog';
 import { soundFX } from './utils/audioEffects';
-import { ShieldCheck, Cpu, Mic, Sparkles, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Cpu, Mic, Sparkles, RefreshCw, Activity } from 'lucide-react';
 
 const INITIAL_NODES = [
   { id: 1, role: 'LEADER', status: 'ONLINE', term: 1, logsCount: 28 },
@@ -13,6 +13,9 @@ const INITIAL_NODES = [
   { id: 4, role: 'FOLLOWER', status: 'ONLINE', term: 1, logsCount: 28 },
   { id: 5, role: 'FOLLOWER', status: 'ONLINE', term: 1, logsCount: 28 },
 ];
+
+const ELECTION_TIMEOUT_MS = 2800;
+const ELECTION_RETRY_BACKOFF_MS = 1200;
 
 export default function App() {
   const [nodes, setNodes] = useState(INITIAL_NODES);
@@ -34,6 +37,8 @@ export default function App() {
   const isolatedRef = useRef(isolatedNodes);
   isolatedRef.current = isolatedNodes;
   const electionInFlightRef = useRef(false);
+  const lastLeaderHeartbeatRef = useRef(Date.now());
+  const electionRetryAtRef = useRef(0);
 
   const addLog = useCallback((type, message) => {
     const now = new Date();
@@ -96,6 +101,8 @@ export default function App() {
 
   // 3. Trigger Election Mechanism
   const triggerElection = useCallback(() => {
+    if (electionInFlightRef.current) return;
+
     const candidates = nodesRef.current.filter(
       (n) => n.status === 'ONLINE' && !isolatedRef.current.includes(n.id) && n.role !== 'LEADER'
     );
@@ -105,6 +112,7 @@ export default function App() {
       return;
     }
 
+    electionInFlightRef.current = true;
     // Pick candidate with lowest ID
     const newCandidate = candidates[0];
     const nextTerm = termRef.current + 1;
@@ -147,18 +155,33 @@ export default function App() {
       } else {
         addLog('CHAOS', `Election split-brain: Only ${voters.length}/5 votes gathered. Retrying election.`);
       }
+      electionInFlightRef.current = false;
     }, 900);
   }, [addLog, isMuted]);
 
-  // Check if leader died and trigger election automatically
+  // Trigger elections when heartbeats from the active leader exceed the timeout.
   useEffect(() => {
-    const leader = nodes.find((n) => n.role === 'LEADER' && n.status === 'ONLINE' && !isolatedNodes.includes(n.id));
-    if (!leader) {
-      const timer = setTimeout(() => {
+    const checkLeaderTimeout = () => {
+      const leader = nodesRef.current.find(
+        (n) => n.role === 'LEADER' && n.status === 'ONLINE' && !isolatedRef.current.includes(n.id)
+      );
+
+      if (leader) {
+        lastLeaderHeartbeatRef.current = Date.now();
+        electionRetryAtRef.current = 0;
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastLeaderHeartbeatRef.current >= ELECTION_TIMEOUT_MS && now >= electionRetryAtRef.current) {
+        electionRetryAtRef.current = now + ELECTION_RETRY_BACKOFF_MS;
         triggerElection();
-      }, 700);
-      return () => clearTimeout(timer);
-    }
+      }
+    };
+
+    const timeoutInterval = setInterval(checkLeaderTimeout, 250);
+    checkLeaderTimeout();
+    return () => clearInterval(timeoutInterval);
   }, [nodes, isolatedNodes, triggerElection]);
 
   // 4. Central Action Handler (Triggered by Voice or Buttons)
@@ -236,6 +259,7 @@ export default function App() {
   // Click on a node to toggle crash/revive
   const handleNodeClick = (nodeId) => {
     soundFX.playClick();
+    const target = nodes.find((n) => n.id === nodeId);
     setNodes((prev) =>
       prev.map((n) =>
         n.id === nodeId
@@ -243,10 +267,11 @@ export default function App() {
           : n
       )
     );
-    const target = nodes.find((n) => n.id === nodeId);
     if (target && target.status === 'ONLINE') {
+        if (!isMuted) soundFX.playAlarm();
       addLog('CHAOS', `Manual Toggle: Node ${nodeId} crashed.`);
     } else {
+        if (!isMuted) soundFX.playRecovery();
       addLog('RECOVERY', `Manual Toggle: Node ${nodeId} revived.`);
     }
   };
@@ -262,30 +287,34 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-lg tracking-tight bg-gradient-to-r from-slate-100 via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                  ChaosWhisper
+                <h1 className="font-bold text-lg tracking-tight text-slate-100">
+                  Chaos<span className="text-cyan-400">Whisper</span>
                 </h1>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold">
-                  v1.0-RAFT
+                  RAFT LAB
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Voice-Driven Distributed Systems Resiliency Cockpit
+                Distributed systems failure simulator
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Wispr Flow Badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               <Mic className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Built with <strong>Wispr Flow</strong></span>
+              <span>VOICE CONTROL READY</span>
             </div>
 
+            <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-emerald-400 uppercase tracking-wider">
+              <Activity className="w-3.5 h-3.5" />
+              Live simulation
+            </div>
             <button
               onClick={() => handleExecuteAction('HEAL_ALL', null, 'Reset All')}
               className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-slate-300 flex items-center gap-1.5 transition-colors"
@@ -318,6 +347,7 @@ export default function App() {
               isolatedNodes={isolatedNodes}
               onNodeClick={handleNodeClick}
               activeLeaderId={activeLeaderId}
+              term={term}
             />
           </div>
 
@@ -332,6 +362,9 @@ export default function App() {
           lastVoiceCmd={lastVoiceCmd}
           isMuted={isMuted}
           setIsMuted={setIsMuted}
+          nodes={nodes}
+          activeLeaderId={activeLeaderId}
+          latency={latency}
         />
       </main>
 

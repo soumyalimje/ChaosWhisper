@@ -18,6 +18,23 @@ class SoundFX {
     }
   }
 
+  scheduleTone({ frequency, startTime, duration, type = 'sine', volume = 0.1, endFrequency }) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, startTime);
+    if (endFrequency) {
+      osc.frequency.exponentialRampToValueAtTime(endFrequency, startTime + duration);
+    }
+    gain.gain.setValueAtTime(0.001, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  }
+
   // Sci-fi click for UI interaction
   playClick() {
     try {
@@ -44,18 +61,17 @@ class SoundFX {
     try {
       this.init();
       if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-      osc.frequency.setValueAtTime(220, this.ctx.currentTime + 0.1);
-      osc.frequency.setValueAtTime(150, this.ctx.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.35);
+      const startTime = this.ctx.currentTime;
+      [0, 0.14, 0.28].forEach((offset) => {
+        this.scheduleTone({
+          frequency: 330,
+          startTime: startTime + offset,
+          duration: 0.12,
+          type: 'square',
+          volume: 0.08,
+          endFrequency: 180
+        });
+      });
     } catch {}
   }
 
@@ -64,18 +80,16 @@ class SoundFX {
     try {
       this.init();
       if (!this.ctx) return;
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 chord
-      notes.forEach((freq, idx) => {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.06);
-        gain.gain.setValueAtTime(0.12, this.ctx.currentTime + idx * 0.06);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.06 + 0.4);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(this.ctx.currentTime + idx * 0.06);
-        osc.stop(this.ctx.currentTime + idx * 0.06 + 0.4);
+      const startTime = this.ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((frequency, index) => {
+        this.scheduleTone({
+          frequency,
+          startTime: startTime + index * 0.075,
+          duration: 0.45,
+          type: 'triangle',
+          volume: 0.1
+        });
       });
     } catch {}
   }

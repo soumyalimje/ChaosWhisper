@@ -1,7 +1,7 @@
 import React from 'react';
 import { Crown, AlertTriangle, ShieldAlert, Cpu } from 'lucide-react';
 
-export default function ClusterCanvas({ nodes, packets, isolatedNodes, onNodeClick, activeLeaderId }) {
+export default function ClusterCanvas({ nodes, packets, isolatedNodes, onNodeClick, activeLeaderId, term }) {
   // SVG canvas dimensions
   const width = 640;
   const height = 460;
@@ -122,6 +122,13 @@ export default function ClusterCanvas({ nodes, packets, isolatedNodes, onNodeCli
         {/* Central Cluster Hub Indicator */}
         <circle cx={centerX} cy={centerY} r="60" fill="url(#leaderGlow)" />
         <circle cx={centerX} cy={centerY} r="30" stroke="#334155" strokeWidth="1" strokeDasharray="3 3" fill="none" opacity="0.4" />
+        <circle cx={centerX} cy={centerY} r="22" fill="#0f172a" stroke={activeLeaderId ? '#10b981' : '#f59e0b'} strokeWidth="1.5" opacity="0.95" />
+        <text x={centerX} y={centerY - 3} textAnchor="middle" fill="#e2e8f0" fontSize="10" fontFamily="IBM Plex Mono, monospace" fontWeight="600">
+          RAFT
+        </text>
+        <text x={centerX} y={centerY + 10} textAnchor="middle" fill={activeLeaderId ? '#34d399' : '#fbbf24'} fontSize="8" fontFamily="IBM Plex Mono, monospace">
+          TERM {term}
+        </text>
       </svg>
 
       {/* Interactive Node Badges (HTML Overlay) */}
@@ -222,6 +229,13 @@ export default function ClusterCanvas({ nodes, packets, isolatedNodes, onNodeCli
             </div>
           );
         })}
+      </div>
+      <div className="absolute left-5 top-4 flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
+        <span className={`h-1.5 w-1.5 rounded-full ${activeLeaderId ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-amber-400 animate-pulse'}`} />
+        {activeLeaderId ? 'AppendEntries stream' : 'Election in progress'}
+      </div>
+      <div className="absolute right-5 top-4 text-[10px] font-mono text-slate-600">
+        5 NODE MESH / 1.8s TICK
       </div>
     </div>
   );
