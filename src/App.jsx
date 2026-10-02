@@ -33,6 +33,7 @@ export default function App() {
   termRef.current = term;
   const isolatedRef = useRef(isolatedNodes);
   isolatedRef.current = isolatedNodes;
+  const electionInFlightRef = useRef(false);
 
   const addLog = useCallback((type, message) => {
     const now = new Date();
