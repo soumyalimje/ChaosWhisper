@@ -57,8 +57,8 @@ export default function App() {
   const [totalDowntimeLoss, setTotalDowntimeLoss] = useState(0);
 
   const [logs, setLogs] = useState([
-    { id: 1, time: '12:00:01', type: 'HEARTBEAT', message: 'Mission Control initialized: Tier-1 E-Commerce Microservice Mesh operational.' },
-    { id: 2, time: '12:00:03', type: 'HEARTBEAT', message: 'AWS Multi-Region Cross-Routing synchronized. Latency nominal (18ms).' }
+    { id: 1, time: '12:00:01', type: 'HEARTBEAT', message: 'Incident rehearsal initialized: simulated e-commerce service mesh operational.' },
+    { id: 2, time: '12:00:03', type: 'HEARTBEAT', message: 'Simulated multi-region routing synchronized. Baseline latency: 18ms.' }
   ]);
 
   const nodesRef = useRef(nodes);
@@ -472,7 +472,7 @@ export default function App() {
         setIsDdosActive(false);
         setLatency(18);
         if (!isMuted) soundFX.playRecovery();
-        addLog('RECOVERY', 'ENTERPRISE HEAL COMPLETE: All microservices, cloud regions, and Raft consensus nodes restored.');
+        addLog('RECOVERY', 'SIMULATION RESET COMPLETE: All modeled services, regions, and consensus nodes restored.');
         break;
       }
 
@@ -568,11 +568,14 @@ export default function App() {
                   ChaosWhisper
                 </h1>
                 <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-300 border border-cyan-500/40 font-bold">
-                  AMAZON / NETFLIX SRE v3.0
+                  SIMULATION LAB v3.0
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-mono">
-                Autonomous Voice-Driven Cloud Resilience & Chaos Engineering Cockpit
+                Voice-controlled distributed-systems incident rehearsal
+              </p>
+              <p className="text-[10px] text-amber-300/80 font-mono mt-1">
+                Safe by design: simulated failures only · business impact figures are illustrative
               </p>
             </div>
           </div>
@@ -592,10 +595,10 @@ export default function App() {
             <button
               onClick={() => setShowReportModal(true)}
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-purple-300 hover:bg-purple-900/60 text-xs font-mono font-bold transition-all cursor-pointer shadow-lg shadow-purple-950/30"
-              title="Generate SRE Post-Mortem & SOC2 Audit Report"
+              title="Generate incident rehearsal report"
             >
               <FileText className="w-3.5 h-3.5 text-purple-400" />
-              <span>SRE Report</span>
+              <span>Incident Report</span>
             </button>
 
             {/* Wispr Flow Live Indicator */}
@@ -634,7 +637,7 @@ export default function App() {
           onOpenReport={() => setShowReportModal(true)}
         />
 
-        {/* Live Real-World Probe Panel (When toggled) */}
+        {/* Read-only HTTP probe panel (when toggled) */}
         {showRealWorldProbe && (
           <RealWorldProbe onLogEvent={addLog} />
         )}
@@ -681,7 +684,7 @@ export default function App() {
         />
       </main>
 
-      {/* SRE Incident Post-Mortem & SOC2 Audit Modal */}
+      {/* Incident rehearsal report modal */}
       <PostMortemModal
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
@@ -694,7 +697,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500 font-mono">
-        <span>ChaosWhisper Enterprise v3.0 · Amazon & Netflix Level Voice Chaos Engineering Cockpit · Built hands-free with Wispr Flow</span>
+        <span>ChaosWhisper Simulation Lab v3.0 · Built hands-free with Wispr Flow</span>
       </footer>
     </div>
   );

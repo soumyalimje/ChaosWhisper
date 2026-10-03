@@ -1,45 +1,44 @@
-# ChaosWhisper Enterprise ⚡
-### Autonomous Voice-Driven Cloud Resilience & Chaos Engineering Cockpit (Amazon & Netflix Level SRE)
+# ChaosWhisper ⚡
+### Voice-Controlled Incident Rehearsal Simulator for Distributed Systems
 
 > **Built hands-free using Wispr Flow** for the Wispr Flow Shortlisting Task.
 
-![Architecture](https://img.shields.io/badge/Architecture-Tier--1_Microservices_|_AWS_Multi--Region_|_Raft-emerald?style=for-the-badge)
+![Architecture](https://img.shields.io/badge/Architecture-Microservices_|_Multi--Region_|_Raft-emerald?style=for-the-badge)
 ![Voice Tool](https://img.shields.io/badge/Voice_Tool-Wispr_Flow-cyan?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/Stack-React_|_Web_Audio_|_SVG_Mesh_|_Tailwind-blue?style=for-the-badge)
-![Compliance](https://img.shields.io/badge/Compliance-SOC_2_Type_II_|_ISO_27001-purple?style=for-the-badge)
 
 ---
 
 ## 📖 Overview
-**ChaosWhisper Enterprise** is an autonomous, voice-driven **Site Reliability Engineering (SRE) War Room Cockpit** inspired by Netflix's Chaos Monkey and AWS's mission-critical incident infrastructure.
+**ChaosWhisper** is a browser-based SRE training lab. Speak or type a failure scenario, watch a distributed-systems simulation respond, inspect the blast radius, and export a rehearsal report.
 
-Rather than frantically typing terminal commands (`kubectl`, `iptables`, SSH) and writing 4-hour post-mortems during high-stakes outages, ChaosWhisper pioneers **VoiceOps (Voice-Driven Cloud Operations)**: speak infrastructure disaster scenarios aloud, watch real-time automated circuit breakers trip, calculate live financial downtime risk, and export executive-ready incident reports hands-free.
+It is deliberately safe: the cockpit does not connect to or modify cloud infrastructure. Its purpose is to make incident response mechanics tangible before a team has to face them in production.
 
 ---
 
-## 🌟 What Makes This Unique, Productive & Enterprise-Grade
+## 🌟 What Makes This Useful
 
 ### 1. 🔀 Multi-Topology Architecture Engine (3 Cockpits in 1)
-Switch between 3 real-world architectural perspectives instantly:
-* **Netflix Microservices Mesh (7 Services):** Edge API Gateway $\to$ Auth & IAM $\to$ Order Engine $\to$ Payment Gateway $\to$ DynamoDB $\to$ Redis Cache $\to$ Kafka Streaming.
-* **AWS Global Cloud (5 Regions):** `us-east-1` (N. Virginia), `us-west-2` (Oregon), `eu-west-1` (Frankfurt), `ap-south-1` (Mumbai), `ap-northeast-1` (Tokyo) with cross-continental BGP failover and trans-oceanic routing.
-* **Raft Consensus Cluster (5 Nodes):** 5-node distributed state machine with automated term election watchdogs and heartbeat vectors.
+Switch between 3 teaching perspectives instantly:
+* **Microservice dependency mesh (7 services):** Gateway, auth, orders, payments, data, cache, and events.
+* **Multi-region traffic map (5 regions):** Simulated failover and latency changes across a global footprint.
+* **Raft-inspired consensus cluster (5 nodes):** Leader failure, elections, partitions, quorum loss, and recovery.
 
-### 2. ⚡ Automated Netflix-Style Circuit Breakers
-Modeled after **Netflix Hystrix** and **Resilience4j**:
+### 2. ⚡ Failure Propagation You Can See
+The simulation models common resilience patterns:
 * When a mission-critical dependency (like the Payment Gateway or DynamoDB) crashes, upstream services automatically trip their circuit breakers to **OPEN / TRIPPED**.
 * Protects the cluster from catastrophic cascading collapse and serves graceful cached fallbacks.
 
-### 3. 💰 Live Financial Outage Loss & Risk Calculator
-Calculates real-time business risk during an outage:
-* **Revenue at Risk Rate ($/min):** Evaluates checkout blockages, state write failures, and regional blackouts (e.g. `$18,500/min` when payments are offline).
-* **Total Downtime Burn Accumulator:** Live ticker tracking aggregate financial impact.
+### 3. 💰 Scenario-Based Business Impact
+The loss counter is an illustrative scenario estimate, not a production finance system:
+* **Revenue at Risk Rate ($/min):** Shows how different simulated failures change business exposure.
+* **Downtime Burn Accumulator:** Makes the cost of recovery delay visible during a drill.
 
-### 4. 📋 One-Click SRE Incident Post-Mortem & SOC 2 Audit Exporter
-* Click **"SRE Report"** or say *"Export Report"*: ChaosWhisper autonomously compiles an audit-ready **Incident Post-Mortem in GitHub-Flavored Markdown** with root cause analysis, millisecond-accurate timeline, MTTR metrics, and hardening recommendations ready for Jira or Confluence.
+### 4. 📋 Rehearsal Report Export
+* Click **"Incident Report"** or say *"Export Report"*: ChaosWhisper compiles a **GitHub-Flavored Markdown rehearsal report** with the simulated timeline, quorum state, MTTR measurements, and follow-up ideas. It is evidence from the drill, not a compliance certification.
 
-### 5. 🌐 Real-World Microservice Synthetic Chaos Probe
-* Input any live HTTP/REST API or local endpoint (e.g. `http://localhost:8000/health`) and execute synthetic chaos bursts to measure live TTFB latency, timeouts, and status codes.
+### 5. 🌐 Read-Only HTTP Resilience Probe
+* Input an HTTP/REST health endpoint and send a small GET burst to measure browser-observed latency, timeouts, and status codes. It does not mutate or attack the target service.
 
 ---
 
@@ -61,7 +60,7 @@ Calculates real-time business risk during an outage:
 
 ## 🛠️ Tech Stack
 * **Frontend:** React 18, Tailwind CSS, Lucide Enterprise Icons
-* **Simulation Engine:** Raft Consensus State Machine, Multi-Topology Dependency Graph, Circuit Breaker State Controller
+* **Simulation Engine:** Raft-inspired consensus state machine, multi-topology dependency graph, circuit breaker state controller
 * **Audio Synthesis:** Web Audio API (Zero-asset procedural oscillators & sound FX)
 * **Voice AI Plane:** Web Speech API & Wispr Flow Speech-to-Intent Parser
 * **Build Tool:** Vite
@@ -82,9 +81,9 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` in Google Chrome, Edge, or Brave. Click the glowing Voice Orb to activate continuous hands-free voice operations!
+Open the Vite URL shown in the terminal, usually `http://localhost:5173`. Chrome, Edge, and Brave support the optional Web Speech API; the text command field always works as a fallback.
 
 ---
 
 ## 🧠 Built for Wispr Flow
-This project was conceptualized, designed, and iterated **using Wispr Flow** for hands-free voice-driven software engineering, establishing an end-to-end benchmark for voice-controlled mission-critical infrastructure.
+This project was conceptualized, designed, and iterated **using Wispr Flow** for hands-free voice-driven software engineering. Wispr Flow is an input method for the demo, not a runtime dependency.

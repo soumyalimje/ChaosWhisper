@@ -28,13 +28,13 @@ export default function MetricsPanel({ term, quorumCount, totalNodes, latency, l
 
           <div>
             <div className="text-xs font-mono font-bold tracking-wider uppercase">
-              {isDdosActive
-                ? '🚨 EMERGENCY: SYNTHETIC DDoS TRAFFIC STORM ACTIVE'
-                : !leaderId
-                ? '⚡ CRISIS: PRIMARY LEADER DOWN · AUTOMATED ELECTION IN FLIGHT'
-                : !isQuorumHealthy
-                ? '🛑 CRITICAL FAULT: CLUSTER QUORUM LOST · DATA WRITES HALTED'
-                : '🟢 MISSION STATUS: OPTIMAL · ALL 5 SERVERS SYNCHRONIZED'}
+                {isDdosActive
+                  ? '🚨 EMERGENCY: SYNTHETIC DDoS TRAFFIC STORM ACTIVE'
+                  : !leaderId
+                  ? '⚡ CRISIS: PRIMARY LEADER DOWN · AUTOMATED ELECTION IN FLIGHT'
+                  : !isQuorumHealthy
+                  ? '🛑 CRITICAL FAULT: CLUSTER QUORUM LOST · DATA WRITES HALTED'
+                  : '🟢 SIMULATION STATUS: NOMINAL · ALL 5 SERVERS SYNCHRONIZED'}
             </div>
             <div className="text-[11px] text-slate-300 font-sans">
               {isDdosActive
@@ -43,7 +43,7 @@ export default function MetricsPanel({ term, quorumCount, totalNodes, latency, l
                 ? 'Remaining servers are holding an emergency vote using the Raft consensus algorithm.'
                 : !isQuorumHealthy
                 ? 'Less than majority alive. Cannot achieve consensus safely.'
-                : 'Raft consensus heartbeat pulse broadcasting every 1.8 seconds. Zero data loss.'}
+                  : 'Raft-inspired heartbeat pulse broadcasting every 1.8 seconds. No simulated writes lost.'}
             </div>
           </div>
         </div>
@@ -60,10 +60,10 @@ export default function MetricsPanel({ term, quorumCount, totalNodes, latency, l
             <button
               onClick={onOpenReport}
               className="px-3 py-1.5 rounded-xl bg-purple-950/70 border border-purple-500/50 hover:bg-purple-900/70 text-purple-300 font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-purple-950/40"
-              title="Open SRE Incident Post-Mortem & SOC2 Audit Report"
+                title="Open incident rehearsal report"
             >
               <FileText className="w-3.5 h-3.5 text-purple-400" />
-              SRE Post-Mortem
+                Incident Report
             </button>
           )}
         </div>
@@ -174,7 +174,7 @@ export default function MetricsPanel({ term, quorumCount, totalNodes, latency, l
             </div>
           </div>
           <div className="px-2.5 py-1.5 rounded-xl bg-purple-900/40 border border-purple-500/40 text-purple-200 text-xs font-mono font-bold shadow-lg">
-            {resiliencyScore >= 90 ? 'SOC 2 A+' : resiliencyScore >= 75 ? 'SOC 2 B' : 'AT RISK'}
+              {resiliencyScore >= 90 ? 'LOW RISK' : resiliencyScore >= 75 ? 'DEGRADED' : 'AT RISK'}
           </div>
         </div>
       </div>

@@ -9,22 +9,22 @@ export function generatePostMortemContent({ nodes, term, logs, mttrHistory, resi
     ? Math.round(mttrHistory.reduce((a, b) => a + b, 0) / mttrHistory.length) 
     : 850;
 
-  return `# 🛡️ INCIDENT POST-MORTEM & RESILIENCY AUDIT REPORT
-**Service Name:** ChaosWhisper Consensus Cluster (Raft Engine)  
+  return `# INCIDENT REHEARSAL REPORT
+**Service Name:** ChaosWhisper Distributed Systems Simulation
 **Date & Time:** ${dateStr}  
-**Classification:** Severity-1 Distributed Systems Drill  
-**Compliance Standard:** SOC 2 Type II / ISO 27001 Business Continuity Section A.17  
-**Overall System Resiliency Score:** ${resiliencyScore}% (Grade: ${resiliencyScore >= 90 ? 'A+ High Assurance' : resiliencyScore >= 75 ? 'B Resilient' : 'C Quorum Risk'})
+**Classification:** Simulated incident rehearsal
+**Evidence Scope:** Browser simulation state and generated event log; not a production incident record or compliance certification
+**Heuristic Resilience Score:** ${resiliencyScore}% (${resiliencyScore >= 90 ? 'nominal' : resiliencyScore >= 75 ? 'degraded' : 'quorum risk'})
 
 ---
 
 ## 1. Executive Summary
-During this operational assessment, ChaosWhisper was subjected to voice-orchestrated chaos injections targeting active consensus leaders, network partitions, and synthetic traffic floods. The 5-node cluster running the Raft consensus protocol detected heartbeat failure and executed autonomous failover without manual engineering intervention.
+During this rehearsal, the browser simulation was subjected to voice- or text-triggered failure scenarios targeting consensus leaders, network partitions, and synthetic traffic floods. The Raft-inspired five-node model detected heartbeat failure and simulated an autonomous failover.
 
 * **Current Epoch / Term:** Term ${term}
 * **Current Operational Leader:** Server ${leader ? leader.id : 'N/A (Election In Flight)'}
 * **Cluster Quorum Health:** ${onlineCount}/5 nodes operational (${Math.round((onlineCount / 5) * 100)}%)
-* **Average Mean Time to Recovery (MTTR):** ${avgMttr}ms (SLA Threshold: < 2,500ms - **PASS**)
+* **Average Mean Time to Recovery (MTTR):** ${avgMttr}ms (measured within this rehearsal)
 
 ---
 
@@ -32,7 +32,7 @@ During this operational assessment, ChaosWhisper was subjected to voice-orchestr
 * **Consensus Quorum Tolerance:** $\\lfloor 5 / 2 \\rfloor + 1 = 3$ nodes required for authoritative commits.
 * **Max Tolerated Simultaneous Failures:** 2 nodes ($f = \\frac{N-1}{2}$).
 * **Current Fault Tolerance Margin:** ${Math.max(0, onlineCount - 3)} node(s) before quorum collapse.
-* **Split-Brain Mitigation:** Monotonically increasing epoch terms prevent dual-leader partitioning.
+* **Split-Brain Mitigation:** Monotonically increasing epoch terms model prevention of dual-leader partitioning.
 
 ---
 
@@ -49,7 +49,7 @@ ${logs.slice(-10).map((l) => `| ${l.time} | \`${l.type}\` | ${l.message} |`).joi
 3. **Automated Rollback:** Enforce automated traffic throttling when P99 RPC latency spikes above $250ms$ during DDoS storms.
 
 ---
-*Report autonomously compiled by ChaosWhisper Voice-Driven SRE Cockpit.*
+*Report compiled by ChaosWhisper from simulated state and event history.*
 `;
 }
 
@@ -89,13 +89,13 @@ export default function PostMortemModal({ isOpen, onClose, nodes, term, logs, mt
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                Executive SRE Post-Mortem & SOC 2 Audit Report
+                Incident Rehearsal Report
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   Ready to Export
                 </span>
               </h2>
               <p className="text-xs text-slate-400 font-mono">
-                Autonomously generated timeline, blast radius, and resilience metrics.
+                Generated from simulated timeline, blast radius, and recovery metrics.
               </p>
             </div>
           </div>
@@ -115,12 +115,12 @@ export default function PostMortemModal({ isOpen, onClose, nodes, term, logs, mt
             <span className="font-bold text-emerald-400 text-sm">{resiliencyScore}%</span>
           </div>
           <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-            <span className="text-slate-400">Compliance:</span>
-            <span className="font-bold text-cyan-400">SOC2 Type II</span>
+            <span className="text-slate-400">Evidence:</span>
+            <span className="font-bold text-cyan-400">SIMULATED</span>
           </div>
           <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-            <span className="text-slate-400">SLA Status:</span>
-            <span className="font-bold text-purple-400">99.99% Met</span>
+            <span className="text-slate-400">Report:</span>
+            <span className="font-bold text-purple-400">DRILL ONLY</span>
           </div>
         </div>
 
@@ -132,7 +132,7 @@ export default function PostMortemModal({ isOpen, onClose, nodes, term, logs, mt
         {/* Footer Actions */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800 bg-slate-950/60">
           <div className="text-[11px] text-slate-400 font-mono">
-            Format: GitHub Flavored Markdown (Ready for Jira, Confluence, or SRE Wiki)
+            Format: GitHub Flavored Markdown (simulation evidence)
           </div>
 
           <div className="flex items-center gap-3">

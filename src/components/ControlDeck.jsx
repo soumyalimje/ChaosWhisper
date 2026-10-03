@@ -148,6 +148,10 @@ export default function ControlDeck({
           setMicError('Microphone permission required! Click the lock icon in the browser URL bar to allow.');
           setIsListening(false);
           isListeningRef.current = false;
+        } else if (e.error === 'no-speech') {
+          setMicError('No speech detected. Try again, or use the text command field below.');
+        } else if (e.error === 'network' || e.error === 'audio-capture') {
+          setMicError('Voice input is unavailable right now. Use the text command field below to continue the rehearsal.');
         }
       };
 
@@ -180,7 +184,7 @@ export default function ControlDeck({
     setMicError('');
 
     if (!speechSupported) {
-      setMicError('Web Speech API is not supported in this browser. Please open in Google Chrome, Brave, or Edge.');
+      setMicError('Browser speech recognition is unavailable. Use the text command field below, or open this demo in Chrome, Brave, or Edge.');
       return;
     }
 
@@ -270,7 +274,7 @@ export default function ControlDeck({
             <div className="flex items-center gap-2">
               <span className="text-base font-bold text-slate-100 flex items-center gap-2">
                 <Radio className={`w-4 h-4 ${isListening ? 'text-rose-400 animate-spin' : 'text-slate-500'}`} />
-                Wispr Flow Hands-Free Command Plane
+                Voice Command Plane
               </span>
               <span
                 className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
@@ -292,17 +296,17 @@ export default function ControlDeck({
                 ) : (
                   <span className="text-emerald-400/90 flex items-center gap-2">
                     <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    Hands-free active. Try: "Kill Payment Gateway", "Blackout US East", "Black Friday Drill", "Status Report"...
+                    Listening active. Try: "Kill Payment Gateway", "Blackout US East", "Black Friday Drill", "Status Report"...
                   </span>
                 )
               ) : (
-                'Click the Orb to enable 100% hands-free voice operations'
+                'Optional voice input. Use the text command field below if speech recognition is unavailable.'
               )}
             </p>
           </div>
         </div>
 
-        {/* AI Voice Toggle, Speed Control & Enterprise SRE Actions */}
+        {/* AI voice, speed control, and rehearsal actions */}
         <div className="flex flex-wrap items-center gap-2.5">
           {/* User Requested Speed Presets: 1x, 1.5x, 2.5x */}
           <div className="flex items-center bg-slate-950/80 border border-slate-700/80 rounded-xl px-2.5 py-1.5 gap-1.5 shadow-inner" title="Calibrate AI speaking speed (1x, 1.5x, 2.5x)">
@@ -344,7 +348,7 @@ export default function ControlDeck({
             {voiceAssistantEnabled ? 'AI VOICE: ON' : 'AI VOICE: MUTED'}
           </button>
 
-          {/* Real-World Probe Toggle */}
+          {/* Read-only HTTP probe toggle */}
           <button
             onClick={onToggleProbe}
             className={`px-3 py-2 rounded-xl border text-xs font-mono font-semibold flex items-center gap-2 transition-all cursor-pointer ${
@@ -352,10 +356,10 @@ export default function ControlDeck({
                 ? 'bg-cyan-950/80 border-cyan-500 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
                 : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200'
             }`}
-            title="Toggle Live Microservice Synthetic Chaos Probe"
+            title="Toggle the read-only HTTP resilience probe"
           >
             <Globe className="w-4 h-4 text-cyan-400" />
-            {showProbe ? 'HIDE PROBE' : 'LIVE PROBE'}
+            {showProbe ? 'HIDE PROBE' : 'HTTP PROBE'}
           </button>
 
           <button
@@ -475,14 +479,14 @@ export default function ControlDeck({
         </div>
       </div>
 
-      {/* Enterprise Chaos Scenarios Grid */}
+      {/* Failure rehearsal scenarios */}
       <div className="pt-5">
         <div className="text-xs font-mono uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-bold">
             <Flame className="w-3.5 h-3.5 text-amber-400" />
-            Amazon & Netflix Level Chaos Scenarios
+            Failure Rehearsal Scenarios
           </span>
-          <span className="text-slate-500 text-[10px]">Hands-free voice or click to trigger</span>
+          <span className="text-slate-500 text-[10px]">Recommended flow: drill → report → heal</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -547,13 +551,13 @@ export default function ControlDeck({
         </div>
       </div>
 
-      {/* Dictation Input Fallback */}
+      {/* Text command fallback */}
       <form onSubmit={handleManualSubmit} className="mt-5 flex gap-2 pt-4 border-t border-slate-800/80">
         <input
           type="text"
           value={manualInput}
           onChange={(e) => setManualInput(e.target.value)}
-          placeholder="Dictate via Wispr Flow: 'Kill Payment Gateway', 'Blackout US East', 'Black Friday Drill', 'Speed 1.5'..."
+          placeholder="Type a command: 'Kill Payment Gateway', 'Blackout US East', 'Black Friday Drill', 'Speed 1.5'..."
           className="flex-1 bg-slate-950 border border-slate-700/80 focus:border-cyan-400 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-200 outline-none transition-all placeholder:text-slate-500"
         />
         <button

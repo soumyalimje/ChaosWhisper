@@ -91,13 +91,13 @@ export default function RealWorldProbe({ onLogEvent }) {
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-              Live Microservice Synthetic Chaos Probe
+              Read-Only HTTP Resilience Probe
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-bold uppercase">
-                Real-World Mode
+                GET ONLY
               </span>
             </h3>
             <p className="text-xs text-slate-400 font-mono">
-              Target real HTTP/REST APIs, serverless lambdas, or local microservices to verify real resilience.
+              Sends small GET bursts to an endpoint and records browser-observed latency, timeouts, and status codes. No mutations.
             </p>
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function RealWorldProbe({ onLogEvent }) {
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-slate-950 text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 shadow-lg shadow-cyan-500/20"
           >
             {isRunning ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-            Burst Chaos 5x
+            GET Burst 5x
           </button>
         </div>
       </div>
