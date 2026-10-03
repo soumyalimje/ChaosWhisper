@@ -1,7 +1,7 @@
 import React from 'react';
-import { Activity, Shield, Hash, Gauge, Server, AlertOctagon, CheckCircle2 } from 'lucide-react';
+import { Activity, Shield, Hash, Gauge, Server, AlertOctagon, CheckCircle2, Award, Clock, FileText } from 'lucide-react';
 
-export default function MetricsPanel({ term, quorumCount, totalNodes, latency, leaderId, isDdosActive }) {
+export default function MetricsPanel({ term, quorumCount, totalNodes, latency, leaderId, isDdosActive, resiliencyScore = 96, avgMttr = 850, onOpenReport }) {
   const quorumPercentage = Math.round((quorumCount / totalNodes) * 100);
   const isQuorumHealthy = quorumCount >= Math.floor(totalNodes / 2) + 1;
 
@@ -9,7 +9,7 @@ export default function MetricsPanel({ term, quorumCount, totalNodes, latency, l
     <div className="space-y-3">
       {/* Dynamic Mission Control Crisis Banner */}
       <div
-        className={`px-5 py-3 rounded-2xl border flex items-center justify-between transition-all duration-500 shadow-xl ${
+        className={`px-5 py-3 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition-all duration-500 shadow-xl ${
           isDdosActive
             ? 'bg-red-950/70 border-red-500/80 text-red-200 shadow-red-950/50 animate-pulse'
             : !leaderId
@@ -48,16 +48,29 @@ export default function MetricsPanel({ term, quorumCount, totalNodes, latency, l
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 font-mono text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-950/60 border border-slate-800">
-          <span className="text-slate-400">SURVIVAL:</span>
-          <span className={isQuorumHealthy ? 'text-emerald-400' : 'text-rose-400'}>
-            {quorumCount}/{totalNodes} ({quorumPercentage}%)
-          </span>
+        <div className="flex items-center gap-2 self-end md:self-auto font-mono text-xs">
+          <div className="hidden sm:flex items-center gap-2 font-bold px-3 py-1.5 rounded-xl bg-slate-950/60 border border-slate-800">
+            <span className="text-slate-400">SURVIVAL:</span>
+            <span className={isQuorumHealthy ? 'text-emerald-400' : 'text-rose-400'}>
+              {quorumCount}/{totalNodes} ({quorumPercentage}%)
+            </span>
+          </div>
+
+          {onOpenReport && (
+            <button
+              onClick={onOpenReport}
+              className="px-3 py-1.5 rounded-xl bg-purple-950/70 border border-purple-500/50 hover:bg-purple-900/70 text-purple-300 font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-purple-950/40"
+              title="Open SRE Incident Post-Mortem & SOC2 Audit Report"
+            >
+              <FileText className="w-3.5 h-3.5 text-purple-400" />
+              SRE Post-Mortem
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 4 Glassmorphism Key Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+      {/* Enterprise Resiliency Metric Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
         {/* 1. Raft Term Card */}
         <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 shadow-xl flex items-center justify-between">
           <div>
@@ -143,6 +156,25 @@ export default function MetricsPanel({ term, quorumCount, totalNodes, latency, l
             }`}
           >
             {leaderId ? `S${leaderId}` : '?'}
+          </div>
+        </div>
+
+        {/* 5. Enterprise Resiliency Score & MTTR */}
+        <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-purple-950/40 to-slate-900/90 border border-purple-500/30 rounded-2xl p-4 shadow-xl flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-purple-300 flex items-center gap-1.5 font-bold">
+              <Award className="w-3.5 h-3.5 text-purple-400" />
+              Resilience Score
+            </span>
+            <div className="text-2xl font-mono font-bold text-purple-200 mt-1 flex items-baseline gap-1">
+              <span>{resiliencyScore}%</span>
+            </div>
+            <div className="text-[10px] text-purple-400/80 font-mono mt-0.5">
+              Avg MTTR: {avgMttr}ms
+            </div>
+          </div>
+          <div className="px-2.5 py-1.5 rounded-xl bg-purple-900/40 border border-purple-500/40 text-purple-200 text-xs font-mono font-bold shadow-lg">
+            {resiliencyScore >= 90 ? 'SOC 2 A+' : resiliencyScore >= 75 ? 'SOC 2 B' : 'AT RISK'}
           </div>
         </div>
       </div>

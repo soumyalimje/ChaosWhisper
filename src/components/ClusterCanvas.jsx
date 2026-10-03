@@ -1,14 +1,30 @@
 import React from 'react';
-import { Crown, AlertTriangle, ShieldAlert, Cpu, Zap, Activity } from 'lucide-react';
+import { Crown, AlertTriangle, ShieldAlert, Cpu, Zap, Activity, Globe, Server, Database, Layers, Radio, Shield, DollarSign, Flame } from 'lucide-react';
 
-export default function ClusterCanvas({ nodes, packets, isolatedNodes, onNodeClick, activeLeaderId, term, isDdosActive }) {
-  const width = 680;
-  const height = 480;
+export default function ClusterCanvas({
+  nodes,
+  packets,
+  isolatedNodes,
+  onNodeClick,
+  activeLeaderId,
+  term,
+  isDdosActive,
+  activeTopology = 'MICROSERVICES',
+  onSelectTopology,
+  microservices = [],
+  cloudRegions = [],
+  onServiceClick,
+  onRegionClick,
+  financialLossPerMin = 0,
+  totalDowntimeLoss = 0
+}) {
+  const width = 720;
+  const height = 520;
   const centerX = width / 2;
   const centerY = height / 2;
-  const radius = 175;
+  const radius = 180;
 
-  // Calculate coordinates in a pentagon
+  // 1. RAFT TOPOLOGY COORDINATES
   const getNodeCoordinates = (index, total = 5) => {
     const angle = (index * 2 * Math.PI) / total - Math.PI / 2;
     return {
@@ -17,45 +33,103 @@ export default function ClusterCanvas({ nodes, packets, isolatedNodes, onNodeCli
     };
   };
 
-  const nodeCoords = (nodes || []).map((n, i) => ({
+  const raftNodeCoords = (nodes || []).map((n, i) => ({
     ...n,
     ...getNodeCoordinates(i, nodes.length)
   }));
 
-  // Unique pairs of nodes for connection lines
-  const connections = [];
-  for (let i = 0; i < nodeCoords.length; i++) {
-    for (let j = i + 1; j < nodeCoords.length; j++) {
-      const from = nodeCoords[i];
-      const to = nodeCoords[j];
-      const isSevered =
-        from.status === 'OFFLINE' ||
-        to.status === 'OFFLINE' ||
-        isolatedNodes.includes(from.id) ||
-        isolatedNodes.includes(to.id);
+  // 2. MICROSERVICE MESH COORDINATES (Tier-1 E-Commerce Architecture)
+  const servicePositions = {
+    gateway: { x: centerX, y: 75 },
+    auth: { x: centerX - 200, y: 180 },
+    orders: { x: centerX, y: 210 },
+    payments: { x: centerX + 200, y: 180 },
+    database: { x: centerX, y: 360 },
+    cache: { x: centerX - 190, y: 340 },
+    kafka: { x: centerX + 190, y: 340 },
+  };
 
-      const isLeaderLine = from.id === activeLeaderId || to.id === activeLeaderId;
+  const microserviceLinks = [
+    { from: 'gateway', to: 'auth' },
+    { from: 'gateway', to: 'orders' },
+    { from: 'orders', to: 'payments' },
+    { from: 'orders', to: 'database' },
+    { from: 'orders', to: 'cache' },
+    { from: 'payments', to: 'kafka' },
+    { from: 'database', to: 'kafka' },
+  ];
 
-      connections.push({
-        id: `${from.id}-${to.id}`,
-        from,
-        to,
-        isSevered,
-        isLeaderLine
-      });
-    }
-  }
+  // 3. AWS GLOBAL CLOUD REGION COORDINATES (World-Map Style)
+  const regionPositions = {
+    'us-east-1': { x: 230, y: 180 },
+    'us-west-2': { x: 120, y: 160 },
+    'eu-west-1': { x: 420, y: 140 },
+    'ap-south-1': { x: 520, y: 280 },
+    'ap-northeast-1': { x: 620, y: 200 },
+  };
+
+  const regionLinks = [
+    { from: 'us-west-2', to: 'us-east-1' },
+    { from: 'us-east-1', to: 'eu-west-1' },
+    { from: 'eu-west-1', to: 'ap-south-1' },
+    { from: 'ap-south-1', to: 'ap-northeast-1' },
+    { from: 'us-west-2', to: 'ap-northeast-1' },
+  ];
 
   return (
-    <div className="relative w-full h-[520px] bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 rounded-3xl border border-cyan-500/20 shadow-[0_0_50px_rgba(6,182,212,0.1)] overflow-hidden flex items-center justify-center p-4">
+    <div className="relative w-full h-[560px] bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 rounded-3xl border border-cyan-500/20 shadow-[0_0_50px_rgba(6,182,212,0.1)] overflow-hidden flex flex-col justify-between p-4">
       {/* Background Cyberpunk Grid & Radial Lighting */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12)_0%,transparent_70%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a15_1px,transparent_1px),linear-gradient(to_bottom,#0f172a15_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
+      {/* Top Bar: Interactive Architecture Switcher + Financial Loss Ticker */}
+      <div className="relative z-20 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-950/80 border border-slate-800/90 rounded-2xl p-2.5 backdrop-blur-md">
+        {/* Topology Selector Buttons */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+          {[
+            { id: 'MICROSERVICES', label: 'Microservices Mesh (7)', icon: Layers },
+            { id: 'GLOBAL_CLOUD', label: 'AWS Global Cloud (5)', icon: Globe },
+            { id: 'RAFT_CLUSTER', label: 'Raft Consensus (5)', icon: Cpu },
+          ].map((topo) => {
+            const Icon = topo.icon;
+            const active = activeTopology === topo.id;
+            return (
+              <button
+                key={topo.id}
+                onClick={() => onSelectTopology && onSelectTopology(topo.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  active
+                    ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{topo.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Live Financial Outage Loss Counter */}
+        <div className="flex items-center gap-3 font-mono text-xs px-3 py-1 bg-slate-900/90 border border-rose-900/40 rounded-xl">
+          <div className="flex items-center gap-1.5">
+            <DollarSign className="w-4 h-4 text-rose-400 animate-pulse" />
+            <span className="text-slate-400 text-[10px] uppercase font-bold">Risk Rate:</span>
+            <span className={`font-bold ${financialLossPerMin > 0 ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}>
+              ${financialLossPerMin.toLocaleString()}/min
+            </span>
+          </div>
+
+          <div className="hidden md:flex items-center gap-1 text-[11px]">
+            <span className="text-slate-500">Total Outage Loss:</span>
+            <span className="text-amber-400 font-bold">${totalDowntimeLoss.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+
       {/* SVG Canvas for High-Tech Laser Mesh and Flying Packets */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${width} ${height}`}>
         <defs>
-          {/* Neon Glow Filters */}
           <filter id="neonGlowCyan" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feMerge>
@@ -64,224 +138,292 @@ export default function ClusterCanvas({ nodes, packets, isolatedNodes, onNodeCli
             </feMerge>
           </filter>
           <filter id="neonGlowRed" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id="neonGlowEmerald" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-
-          {/* Gradients */}
-          <radialGradient id="centerCore" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.3" />
-            <stop offset="80%" stopColor="#0284c7" stopOpacity="0.05" />
-            <stop offset="100%" stopColor="#090d16" stopOpacity="0" />
-          </radialGradient>
+          <filter id="neonGlowAmber" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
-        {/* Central Rotating Radar Rings */}
-        <circle cx={centerX} cy={centerY} r="120" stroke="#1e293b" strokeWidth="1" strokeDasharray="4 8" fill="none" opacity="0.4" />
-        <circle cx={centerX} cy={centerY} r="75" fill="url(#centerCore)" />
-        <circle cx={centerX} cy={centerY} r="45" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="3 3" fill="none" opacity="0.6" className="animate-spin-slow" />
-        <circle cx={centerX} cy={centerY} r="28" fill="#090d16" stroke={activeLeaderId ? '#10b981' : '#f59e0b'} strokeWidth="2" filter="url(#neonGlowCyan)" />
+        {/* ======================= VIEW 1: MICROSERVICES MESH ======================= */}
+        {activeTopology === 'MICROSERVICES' && (
+          <g>
+            {/* Dependency connection lines */}
+            {microserviceLinks.map((link) => {
+              const p1 = servicePositions[link.from];
+              const p2 = servicePositions[link.to];
+              const s1 = microservices.find((s) => s.id === link.from);
+              const s2 = microservices.find((s) => s.id === link.to);
+              const isBroken = (s1 && s1.status === 'OFFLINE') || (s2 && s2.status === 'OFFLINE');
+              const isBreakerTripped = (s1 && s1.breaker === 'TRIPPED') || (s2 && s2.breaker === 'TRIPPED');
 
-        {/* Central Core Text */}
-        <text x={centerX} y={centerY - 4} textAnchor="middle" fill="#f1f5f9" fontSize="11" fontFamily="JetBrains Mono, monospace" fontWeight="700">
-          RAFT
-        </text>
-        <text x={centerX} y={centerY + 10} textAnchor="middle" fill={activeLeaderId ? '#34d399' : '#fbbf24'} fontSize="9" fontFamily="JetBrains Mono, monospace" fontWeight="600">
-          TERM {term}
-        </text>
-
-        {/* Connection Laser Lines */}
-        {connections.map((c) => {
-          return (
-            <g key={c.id}>
-              {/* Underlying glow line */}
-              <line
-                x1={c.from.x}
-                y1={c.from.y}
-                x2={c.to.x}
-                y2={c.to.y}
-                stroke={c.isSevered ? '#f43f5e' : c.isLeaderLine ? '#06b6d4' : '#334155'}
-                strokeWidth={c.isSevered ? 2 : c.isLeaderLine ? 2.5 : 1}
-                strokeDasharray={c.isSevered ? '6 6' : 'none'}
-                strokeOpacity={c.isSevered ? 0.6 : c.isLeaderLine ? 0.7 : 0.25}
-                filter={c.isSevered ? 'url(#neonGlowRed)' : c.isLeaderLine ? 'url(#neonGlowCyan)' : undefined}
-              />
-
-              {/* Broken Cable Spark Icon */}
-              {c.isSevered && (
-                <g transform={`translate(${(c.from.x + c.to.x) / 2}, ${(c.from.y + c.to.y) / 2})`}>
-                  <circle r="7" fill="#881337" stroke="#f43f5e" strokeWidth="1.5" />
-                  <line x1="-3" y1="-3" x2="3" y2="3" stroke="#fff" strokeWidth="1.5" />
-                  <line x1="3" y1="-3" x2="-3" y2="3" stroke="#fff" strokeWidth="1.5" />
+              return (
+                <g key={`${link.from}-${link.to}`}>
+                  <line
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                    stroke={isBroken ? '#f43f5e' : isBreakerTripped ? '#f59e0b' : '#0ea5e9'}
+                    strokeWidth={isBroken ? 1 : isBreakerTripped ? 2 : 1.5}
+                    strokeDasharray={isBroken ? '4 6' : isBreakerTripped ? '6 6' : 'none'}
+                    opacity={isBroken ? 0.35 : 0.75}
+                  />
+                  {!isBroken && (
+                    <circle r="2.5" fill={isBreakerTripped ? '#fbbf24' : '#38bdf8'} filter="url(#neonGlowCyan)">
+                      <animateMotion
+                        path={`M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`}
+                        dur={isBreakerTripped ? '2.5s' : '1.4s'}
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  )}
                 </g>
-              )}
-            </g>
-          );
-        })}
+              );
+            })}
+          </g>
+        )}
 
-        {/* Flying Packets (Heartbeats & Raft Messages) */}
-        {packets.map((pkt) => {
-          const from = nodeCoords.find((n) => n.id === pkt.from);
-          const to = nodeCoords.find((n) => n.id === pkt.to);
-          if (!from || !to) return null;
+        {/* ======================= VIEW 2: GLOBAL CLOUD REGIONS ======================= */}
+        {activeTopology === 'GLOBAL_CLOUD' && (
+          <g>
+            {regionLinks.map((link) => {
+              const p1 = regionPositions[link.from];
+              const p2 = regionPositions[link.to];
+              const r1 = cloudRegions.find((r) => r.id === link.from);
+              const r2 = cloudRegions.find((r) => r.id === link.to);
+              const isSevered = (r1 && r1.status === 'OFFLINE') || (r2 && r2.status === 'OFFLINE');
 
-          const currentX = from.x + (to.x - from.x) * pkt.progress;
-          const currentY = from.y + (to.y - from.y) * pkt.progress;
+              return (
+                <g key={`${link.from}-${link.to}`}>
+                  <line
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                    stroke={isSevered ? '#f43f5e' : '#38bdf8'}
+                    strokeWidth={isSevered ? 1 : 2}
+                    strokeDasharray={isSevered ? '5 5' : 'none'}
+                    opacity={isSevered ? 0.3 : 0.7}
+                  />
+                  {!isSevered && (
+                    <circle r="3" fill="#38bdf8" filter="url(#neonGlowCyan)">
+                      <animateMotion
+                        path={`M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`}
+                        dur="2s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+        )}
 
-          const packetColor =
-            pkt.type === 'VOTE_REQUEST' ? '#f59e0b' :
-            pkt.type === 'VOTE_GRANTED' ? '#10b981' :
-            pkt.type === 'DDOS_FLOOD' ? '#f43f5e' :
-            '#38bdf8';
+        {/* ======================= VIEW 3: RAFT CONSENSUS CLUSTER ======================= */}
+        {activeTopology === 'RAFT_CLUSTER' && (
+          <g>
+            <circle cx={centerX} cy={centerY} r="120" stroke="#1e293b" strokeWidth="1" strokeDasharray="4 8" fill="none" opacity="0.4" />
+            <circle cx={centerX} cy={centerY} r="75" fill="#090d16" stroke="#0284c7" strokeWidth="1" opacity="0.3" />
+            <circle cx={centerX} cy={centerY} r="28" fill="#090d16" stroke={activeLeaderId ? '#10b981' : '#f59e0b'} strokeWidth="2" filter="url(#neonGlowCyan)" />
+            <text x={centerX} y={centerY - 3} textAnchor="middle" fill="#f1f5f9" fontSize="11" fontFamily="JetBrains Mono, monospace" fontWeight="700">RAFT</text>
+            <text x={centerX} y={centerY + 10} textAnchor="middle" fill={activeLeaderId ? '#34d399' : '#fbbf24'} fontSize="9" fontFamily="JetBrains Mono, monospace" fontWeight="600">TERM {term}</text>
 
-          return (
-            <g key={pkt.id}>
-              {/* Outer Glow Halo */}
-              <circle
-                cx={currentX}
-                cy={currentY}
-                r={pkt.type === 'DDOS_FLOOD' ? 6 : 4}
-                fill={packetColor}
-                opacity="0.9"
-                filter="url(#neonGlowCyan)"
-              />
-              {/* Inner Core Bright Dot */}
-              <circle cx={currentX} cy={currentY} r="2" fill="#ffffff" />
-            </g>
-          );
-        })}
+            {/* Raft connection lines */}
+            {raftNodeCoords.map((from, i) =>
+              raftNodeCoords.slice(i + 1).map((to) => {
+                const isSevered = from.status === 'OFFLINE' || to.status === 'OFFLINE' || isolatedNodes.includes(from.id) || isolatedNodes.includes(to.id);
+                return (
+                  <line
+                    key={`${from.id}-${to.id}`}
+                    x1={from.x}
+                    y1={from.y}
+                    x2={to.x}
+                    y2={to.y}
+                    stroke={isSevered ? '#e11d48' : '#0284c7'}
+                    strokeWidth={isSevered ? 1 : 1.5}
+                    strokeDasharray={isSevered ? '4 6' : 'none'}
+                    opacity={isSevered ? 0.25 : 0.6}
+                  />
+                );
+              })
+            )}
+
+            {/* Flying Packets */}
+            {packets.map((p) => {
+              const src = raftNodeCoords.find((n) => n.id === p.from);
+              const dst = raftNodeCoords.find((n) => n.id === p.to);
+              if (!src || !dst) return null;
+              const px = src.x + (dst.x - src.x) * p.progress;
+              const py = src.y + (dst.y - src.y) * p.progress;
+              return (
+                <circle
+                  key={p.id}
+                  cx={px}
+                  cy={py}
+                  r={p.type === 'DDOS_FLOOD' ? 3.5 : 2.5}
+                  fill={p.type === 'DDOS_FLOOD' ? '#ef4444' : '#38bdf8'}
+                  filter={p.type === 'DDOS_FLOOD' ? 'url(#neonGlowRed)' : 'url(#neonGlowCyan)'}
+                />
+              );
+            })}
+          </g>
+        )}
       </svg>
 
-      {/* Interactive HTML Node Badges */}
-      <div className="relative w-[680px] h-[480px] pointer-events-auto">
-        {nodeCoords.map((node) => {
-          const isLeader = node.role === 'LEADER' && node.status !== 'OFFLINE';
-          const isCandidate = node.role === 'CANDIDATE' && node.status !== 'OFFLINE';
-          const isOffline = node.status === 'OFFLINE';
-          const isIsolated = isolatedNodes.includes(node.id);
+      {/* ======================= HTML INTERACTIVE NODES LAYER ======================= */}
+      <div className="relative w-full h-full pointer-events-auto">
+        {/* 1. MICROSERVICES NODES */}
+        {activeTopology === 'MICROSERVICES' &&
+          microservices.map((svc) => {
+            const pos = servicePositions[svc.id] || { x: 100, y: 100 };
+            const isOffline = svc.status === 'OFFLINE';
+            const isBreakerTripped = svc.breaker === 'TRIPPED';
 
-          return (
-            <div
-              key={node.id}
-              onClick={() => onNodeClick(node.id)}
-              style={{
-                left: `${node.x}px`,
-                top: `${node.y}px`,
-                transform: 'translate(-50%, -50%)',
-              }}
-              className={`group absolute cursor-pointer select-none transition-all duration-300 ${
-                isOffline ? 'scale-90 opacity-70' : 'hover:scale-110 active:scale-95'
-              }`}
-            >
-              {/* Outer Neon Aura for Leader */}
-              {isLeader && (
-                <div className="absolute -inset-4 rounded-3xl bg-emerald-500/25 blur-md animate-pulse" />
-              )}
-              {isCandidate && (
-                <div className="absolute -inset-3 rounded-3xl bg-amber-500/20 blur-md animate-ping" />
-              )}
-              {isOffline && (
-                <div className="absolute -inset-2 rounded-3xl bg-rose-500/20 blur-sm" />
-              )}
-
-              {/* Node Card Core */}
+            return (
               <div
-                className={`relative flex flex-col items-center justify-center w-28 h-28 rounded-2xl p-2 border backdrop-blur-xl shadow-2xl transition-all ${
-                  isOffline
-                    ? 'bg-rose-950/80 border-rose-500/80 text-rose-300 shadow-rose-900/40'
-                    : isLeader
-                    ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-emerald-500/30 ring-2 ring-emerald-400/50'
-                    : isCandidate
-                    ? 'bg-amber-950/90 border-amber-400 text-amber-200 shadow-amber-500/30 ring-2 ring-amber-400/50'
-                    : 'bg-slate-900/90 border-cyan-500/40 text-cyan-200 hover:border-cyan-400 shadow-cyan-500/20'
-                }`}
+                key={svc.id}
+                onClick={() => onServiceClick && onServiceClick(svc.id)}
+                style={{ left: `${pos.x}px`, top: `${pos.y}px` }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
               >
-                {/* Role Icon Header */}
-                <div className="flex items-center justify-center mb-1">
-                  {isOffline ? (
-                    <ShieldAlert className="w-6 h-6 text-rose-400 animate-pulse" />
-                  ) : isLeader ? (
-                    <Crown className="w-6 h-6 text-emerald-300 animate-bounce" />
-                  ) : isCandidate ? (
-                    <AlertTriangle className="w-6 h-6 text-amber-300 animate-spin" />
-                  ) : (
-                    <Cpu className="w-6 h-6 text-cyan-300" />
-                  )}
-                </div>
-
-                {/* Node Label */}
-                <span className="text-xs font-mono font-bold tracking-wider text-slate-100">
-                  SERVER-{node.id}
-                </span>
-
-                {/* Human-Readable Status Role */}
-                <span
-                  className={`mt-1 text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase tracking-tight ${
+                <div
+                  className={`relative flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 w-36 ${
                     isOffline
-                      ? 'bg-rose-500/30 text-rose-200 border border-rose-500/40'
-                      : isLeader
-                      ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/50'
-                      : isCandidate
-                      ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50'
-                      : 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/80'
+                      ? 'bg-rose-950/80 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.4)] opacity-75'
+                      : isBreakerTripped
+                      ? 'bg-amber-950/80 border-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/40 animate-pulse'
+                      : 'bg-slate-900/90 border-cyan-500/50 hover:border-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:scale-105'
                   }`}
                 >
-                  {isOffline ? 'CRASHED' : isLeader ? 'LEADER (BOSS)' : isCandidate ? 'VOTING...' : 'FOLLOWER'}
-                </span>
-
-                {/* Subtext info */}
-                <div className="mt-1 flex items-center gap-1 text-[9px] font-mono text-slate-400">
-                  <Activity className="w-2.5 h-2.5 text-cyan-400" />
-                  <span>Log #{node.logsCount}</span>
-                </div>
-
-                {/* Term Counter Badge */}
-                <div className="absolute -top-2 -right-2 bg-slate-900 border border-slate-700 text-cyan-300 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full shadow-lg">
-                  T:{node.term}
-                </div>
-
-                {/* Isolated Tag */}
-                {isIsolated && !isOffline && (
-                  <div className="absolute -bottom-2 bg-amber-500 text-slate-950 text-[8px] font-mono font-bold px-1.5 py-0.5 rounded-full shadow-lg">
-                    ISOLATED
+                  {/* Status Indicator Tag */}
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-[9px] font-mono font-bold text-slate-400 uppercase">{svc.role}</span>
+                    <span
+                      className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                        isOffline
+                          ? 'bg-rose-500 text-slate-950'
+                          : isBreakerTripped
+                          ? 'bg-amber-500 text-slate-950 font-extrabold'
+                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      }`}
+                    >
+                      {isOffline ? 'OFFLINE' : isBreakerTripped ? '⚡ TRIPPED' : 'HEALTHY'}
+                    </span>
                   </div>
-                )}
-              </div>
 
-              {/* Tooltip on hover */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none z-50">
-                <div className="bg-slate-900/95 border border-cyan-500/40 rounded-xl p-2.5 text-[11px] font-mono whitespace-nowrap shadow-2xl text-slate-200 backdrop-blur-md">
-                  <div className="font-bold text-cyan-300">Server #{node.id} Details</div>
-                  <div>Role: <span className={isLeader ? 'text-emerald-400' : isOffline ? 'text-rose-400' : 'text-slate-300'}>{isOffline ? 'OFFLINE (DEAD)' : node.role}</span></div>
-                  <div>Raft Term: <span className="text-cyan-400">{node.term}</span></div>
-                  <div>Committed Logs: <span className="text-amber-400">{node.logsCount}</span></div>
-                  <div className="text-[10px] text-slate-400 mt-1 border-t border-slate-800 pt-1">Click node to crash or revive</div>
+                  <span className="text-xs font-bold font-mono text-slate-100 text-center leading-tight truncate w-full">
+                    {svc.name}
+                  </span>
+
+                  <div className="flex items-center justify-between w-full mt-2 text-[10px] font-mono text-slate-400 border-t border-slate-800 pt-1">
+                    <span>{svc.rps.toLocaleString()} RPS</span>
+                    <span className={svc.latency > 50 ? 'text-amber-400 font-bold' : 'text-cyan-400'}>
+                      {svc.latency}ms
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+
+        {/* 2. AWS GLOBAL CLOUD NODES */}
+        {activeTopology === 'GLOBAL_CLOUD' &&
+          cloudRegions.map((reg) => {
+            const pos = regionPositions[reg.id] || { x: 100, y: 100 };
+            const isOffline = reg.status === 'OFFLINE';
+
+            return (
+              <div
+                key={reg.id}
+                onClick={() => onRegionClick && onRegionClick(reg.id)}
+                style={{ left: `${pos.x}px`, top: `${pos.y}px` }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
+              >
+                <div
+                  className={`p-3 rounded-2xl border transition-all duration-300 w-40 flex flex-col items-center ${
+                    isOffline
+                      ? 'bg-rose-950/80 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.4)] opacity-70'
+                      : 'bg-slate-900/90 border-cyan-500/50 hover:border-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:scale-105'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-[9px] font-mono font-bold text-slate-400 uppercase">{reg.role}</span>
+                    <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                      isOffline ? 'bg-rose-500 text-slate-950' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    }`}>
+                      {isOffline ? 'BLACKOUT' : 'ROUTING'}
+                    </span>
+                  </div>
+
+                  <span className="text-xs font-bold font-mono text-slate-100 text-center truncate w-full">
+                    {reg.name}
+                  </span>
+
+                  <div className="flex items-center justify-between w-full mt-2 text-[10px] font-mono text-slate-400 border-t border-slate-800 pt-1">
+                    <span>{reg.trafficPct}% Traffic</span>
+                    <span className="text-cyan-400">{reg.latency}ms</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+        {/* 3. RAFT CONSENSUS NODES */}
+        {activeTopology === 'RAFT_CLUSTER' &&
+          raftNodeCoords.map((node) => {
+            const isLeader = activeLeaderId === node.id;
+            const isOffline = node.status === 'OFFLINE';
+            const isIsolated = isolatedNodes.includes(node.id);
+
+            return (
+              <div
+                key={node.id}
+                onClick={() => onNodeClick && onNodeClick(node.id)}
+                style={{ left: `${node.x}px`, top: `${node.y}px` }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
+              >
+                <div
+                  className={`relative flex items-center justify-center w-20 h-20 rounded-3xl border-2 transition-all duration-300 ${
+                    isOffline
+                      ? 'bg-rose-950/80 border-rose-500 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.4)] opacity-70'
+                      : isIsolated
+                      ? 'bg-amber-950/80 border-amber-500 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.4)]'
+                      : isLeader
+                      ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200 shadow-[0_0_30px_rgba(16,185,129,0.5)] scale-110 ring-4 ring-emerald-500/20'
+                      : 'bg-slate-900/90 border-cyan-500/40 text-slate-200 hover:border-cyan-300 hover:scale-105'
+                  }`}
+                >
+                  {isLeader && (
+                    <Crown className="w-5 h-5 text-emerald-400 absolute -top-3 animate-bounce" />
+                  )}
+
+                  <div className="text-center font-mono">
+                    <div className="text-xs font-bold">SRV-{node.id}</div>
+                    <div className="text-[9px] text-slate-400">{isOffline ? 'OFFLINE' : node.role}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
       </div>
 
-      {/* Top Overlay Badges */}
-      <div className="absolute left-6 top-5 flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-slate-400">
-        <span className={`h-2 w-2 rounded-full ${activeLeaderId ? 'bg-emerald-400 shadow-[0_0_10px_#34d399]' : 'bg-amber-400 animate-ping'}`} />
-        <span>{activeLeaderId ? `LEADER ACTIVE · NODE-${activeLeaderId}` : 'LEADER DOWN · VOTING IN PROGRESS'}</span>
-      </div>
-
-      <div className="absolute right-6 top-5 flex items-center gap-2 text-[11px] font-mono text-cyan-400">
-        <Zap className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-        <span>{isDdosActive ? '🚨 DDoS TRAFFIC FLOOD ACTIVE' : '5-NODE RAFT MESH'}</span>
+      {/* Bottom Hint Banner */}
+      <div className="relative z-10 flex items-center justify-between text-[11px] font-mono text-slate-400 border-t border-slate-800/80 pt-2 px-1">
+        <span className="flex items-center gap-1.5">
+          <Activity className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+          Click any component or speak: <strong className="text-cyan-300">"Kill Payment Gateway"</strong>, <strong className="text-cyan-300">"Blackout US East"</strong>, <strong className="text-cyan-300">"Trip Circuit Breaker"</strong>
+        </span>
+        <span className="text-[10px] text-slate-500">Autonomous Chaos Engine active</span>
       </div>
     </div>
   );
