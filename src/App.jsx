@@ -4,7 +4,8 @@ import ControlDeck from './components/ControlDeck';
 import MetricsPanel from './components/MetricsPanel';
 import EventLog from './components/EventLog';
 import { soundFX } from './utils/audioEffects';
-import { ShieldCheck, Cpu, Mic, Sparkles, RefreshCw, Activity } from 'lucide-react';
+import { aiVoice } from './utils/aiVoice';
+import { ShieldCheck, Cpu, Mic, RefreshCw, Activity, Volume2 } from 'lucide-react';
 
 const INITIAL_NODES = [
   { id: 1, role: 'LEADER', status: 'ONLINE', term: 1, logsCount: 28 },
@@ -14,8 +15,8 @@ const INITIAL_NODES = [
   { id: 5, role: 'FOLLOWER', status: 'ONLINE', term: 1, logsCount: 28 },
 ];
 
-const ELECTION_TIMEOUT_MS = 2800;
-const ELECTION_RETRY_BACKOFF_MS = 1200;
+const ELECTION_TIMEOUT_MS = 2400;
+const ELECTION_RETRY_BACKOFF_MS = 1000;
 
 export default function App() {
   const [nodes, setNodes] = useState(INITIAL_NODES);
@@ -24,7 +25,9 @@ export default function App() {
   const [term, setTerm] = useState(1);
   const [latency, setLatency] = useState(18);
   const [isMuted, setIsMuted] = useState(false);
+  const [isDdosActive, setIsDdosActive] = useState(false);
   const [lastVoiceCmd, setLastVoiceCmd] = useState('');
+  const [screenAlert, setScreenAlert] = useState(false);
   const [logs, setLogs] = useState([
     { id: 1, time: '12:00:01', type: 'HEARTBEAT', message: 'Cluster initialized. Node 1 elected Primary Leader.' },
     { id: 2, time: '12:00:03', type: 'HEARTBEAT', message: 'Heartbeat broadcast sent to 4 followers (Round-trip: 18ms).' }
@@ -39,6 +42,11 @@ export default function App() {
   const electionInFlightRef = useRef(false);
   const lastLeaderHeartbeatRef = useRef(Date.now());
   const electionRetryAtRef = useRef(0);
+
+  const triggerScreenAlert = () => {
+    setScreenAlert(true);
+    setTimeout(() => setScreenAlert(false), 800);
+  };
 
   const addLog = useCallback((type, message) => {
     const now = new Date();
@@ -64,20 +72,19 @@ export default function App() {
       );
 
       if (leader) {
-        // Send heartbeat packets to all active followers
         const targets = nodesRef.current.filter(
           (n) => n.id !== leader.id && n.status === 'ONLINE' && !isolatedRef.current.includes(n.id)
         );
 
         const newPackets = targets.map((t) => ({
-          id: `hb-${leader.id}-${t.id}-${Date.now()}`,
+          id: `hb-${leader.id}-${t.id}-${Date.now()}-${Math.random()}`,
           from: leader.id,
           to: t.id,
           type: 'HEARTBEAT',
           progress: 0,
         }));
 
-        setPackets((prev) => [...prev.slice(-10), ...newPackets]);
+        setPackets((prev) => [...prev.slice(-15), ...newPackets]);
       }
     }, 1800);
 
@@ -90,7 +97,7 @@ export default function App() {
     const animate = () => {
       setPackets((prev) =>
         prev
-          .map((p) => ({ ...p, progress: p.progress + 0.035 }))
+          .map((p) => ({ ...p, progress: p.progress + (p.type === 'DDOS_FLOOD' ? 0.06 : 0.038) }))
           .filter((p) => p.progress < 1)
       );
       animId = requestAnimationFrame(animate);
@@ -99,7 +106,7 @@ export default function App() {
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  // 3. Trigger Election Mechanism
+  // 3. Trigger Election Mechanism (Raft Algorithm)
   const triggerElection = useCallback(() => {
     if (electionInFlightRef.current) return;
 
@@ -113,12 +120,11 @@ export default function App() {
     }
 
     electionInFlightRef.current = true;
-    // Pick candidate with lowest ID
     const newCandidate = candidates[0];
     const nextTerm = termRef.current + 1;
     setTerm(nextTerm);
 
-    addLog('ELECTION', `Heartbeat timeout! Node ${newCandidate.id} initiated Term ${nextTerm} election.`);
+    addLog('ELECTION', `Missed heartbeats! Node ${newCandidate.id} initiated Term ${nextTerm} election.`);
 
     // Set to candidate state
     setNodes((prev) =>
@@ -131,14 +137,14 @@ export default function App() {
       )
     );
 
-    // Send vote requests
+    // Collect votes after voting round
     setTimeout(() => {
       const voters = nodesRef.current.filter(
         (n) => n.status === 'ONLINE' && !isolatedRef.current.includes(n.id)
       );
 
       if (voters.length >= 3) {
-        // Won election!
+        // Quorum won!
         setNodes((prev) =>
           prev.map((n) =>
             n.id === newCandidate.id
@@ -148,6 +154,7 @@ export default function App() {
         );
 
         if (!isMuted) soundFX.playRecovery();
+        aiVoice.speak(`Server ${newCandidate.id} elected as new Primary Leader. Quorum restored.`);
         addLog(
           'RECOVERY',
           `Quorum achieved (${voters.length}/5 votes). Node ${newCandidate.id} elected Primary Leader for Term ${nextTerm}.`
@@ -159,7 +166,7 @@ export default function App() {
     }, 900);
   }, [addLog, isMuted]);
 
-  // Trigger elections when heartbeats from the active leader exceed the timeout.
+  // Automated Election Watchdog
   useEffect(() => {
     const checkLeaderTimeout = () => {
       const leader = nodesRef.current.find(
@@ -184,45 +191,97 @@ export default function App() {
     return () => clearInterval(timeoutInterval);
   }, [nodes, isolatedNodes, triggerElection]);
 
-  // 4. Central Action Handler (Triggered by Voice or Buttons)
+  // 4. Central Action Handler (Triggered by Voice or UI)
   const handleExecuteAction = useCallback((action, nodeId, rawVoiceText) => {
     if (rawVoiceText) {
       setLastVoiceCmd(rawVoiceText);
-      addLog('VOICE', `Command parsed: "${rawVoiceText}"`);
+      addLog('VOICE', `Spoken instruction: "${rawVoiceText}"`);
     }
 
     switch (action) {
       case 'CRASH_LEADER': {
         const leader = nodesRef.current.find((n) => n.role === 'LEADER' && n.status === 'ONLINE');
         if (leader) {
+          triggerScreenAlert();
           if (!isMuted) soundFX.playAlarm();
           setNodes((prev) =>
             prev.map((n) => (n.id === leader.id ? { ...n, status: 'OFFLINE' } : n))
           );
-          addLog('CHAOS', `INJECTED CRASH: Primary Leader (Node ${leader.id}) terminated.`);
+          addLog('CHAOS', `CRASH TRIGGERED: Primary Leader (Server ${leader.id}) terminated.`);
         } else {
-          addLog('CHAOS', 'No active leader currently online to crash.');
+          addLog('CHAOS', 'No active leader currently online.');
         }
         break;
       }
 
       case 'CRASH_NODE': {
         const targetId = nodeId || 1;
+        triggerScreenAlert();
         setNodes((prev) =>
           prev.map((n) => (n.id === targetId ? { ...n, status: 'OFFLINE' } : n))
         );
         if (!isMuted) soundFX.playAlarm();
-        addLog('CHAOS', `INJECTED CRASH: Node ${targetId} forced OFFLINE.`);
+        addLog('CHAOS', `SERVER CRASH: Server ${targetId} forced OFFLINE.`);
         break;
       }
 
       case 'ISOLATE_NODE': {
         const targetId = nodeId || 2;
+        triggerScreenAlert();
         setIsolatedNodes((prev) =>
           prev.includes(targetId) ? prev : [...prev, targetId]
         );
         if (!isMuted) soundFX.playAlarm();
-        addLog('CHAOS', `NETWORK PARTITION: Node ${targetId} isolated from cluster mesh.`);
+        addLog('CHAOS', `NETWORK PARTITION: Server ${targetId} isolated from cluster mesh.`);
+        break;
+      }
+
+      case 'SIMULATE_DDOS': {
+        triggerScreenAlert();
+        setIsDdosActive(true);
+        setLatency(780);
+        addLog('CHAOS', 'SYNTHETIC DDoS: Injected 800+ RPC/s traffic storm across cluster.');
+
+        // Spawn rapid flood packets
+        const floodPackets = [];
+        for (let i = 1; i <= 5; i++) {
+          floodPackets.push({
+            id: `ddos-${Date.now()}-${i}-${Math.random()}`,
+            from: i,
+            to: (i % 5) + 1,
+            type: 'DDOS_FLOOD',
+            progress: 0,
+          });
+        }
+        setPackets((prev) => [...prev, ...floodPackets]);
+
+        setTimeout(() => {
+          setIsDdosActive(false);
+          setLatency(18);
+          addLog('RECOVERY', 'DDoS MITIGATED: Traffic scrubbed. Latency normalized to 18ms.');
+          aiVoice.speak('DDoS traffic mitigated. Cluster bandwidth stabilized.');
+        }, 7000);
+        break;
+      }
+
+      case 'CASCADE_FAILURE': {
+        triggerScreenAlert();
+        addLog('CHAOS', 'CASCADE DISASTER: Sequential node failure initiated.');
+        // Kill Node 1 immediately
+        setNodes((prev) => prev.map((n) => (n.id === 1 ? { ...n, status: 'OFFLINE' } : n)));
+
+        // Kill Node 2 after 1.5s
+        setTimeout(() => {
+          setNodes((prev) => prev.map((n) => (n.id === 2 ? { ...n, status: 'OFFLINE' } : n)));
+          addLog('CHAOS', 'CASCADE STEP 2: Server 2 collapsed.');
+        }, 1500);
+
+        // Kill Node 3 after 3s
+        setTimeout(() => {
+          setNodes((prev) => prev.map((n) => (n.id === 3 ? { ...n, status: 'OFFLINE' } : n)));
+          addLog('CHAOS', 'CASCADE STEP 3: Server 3 collapsed. Quorum critical (2/5).');
+          aiVoice.speak('Emergency alert! Quorum lost. Three servers down.');
+        }, 3000);
         break;
       }
 
@@ -230,7 +289,7 @@ export default function App() {
         setLatency(385);
         addLog('CHAOS', 'HIGH JITTER: Injected 350ms synthetic network delay on RPC channels.');
         setTimeout(() => {
-          setLatency(18 + Math.floor(Math.random() * 8));
+          setLatency(18 + Math.floor(Math.random() * 6));
           addLog('HEARTBEAT', 'Latency normalized to 18ms baseline.');
         }, 6000);
         break;
@@ -243,11 +302,13 @@ export default function App() {
 
       case 'HEAL_ALL': {
         setIsolatedNodes([]);
+        setIsDdosActive(false);
+        setLatency(18);
         setNodes((prev) =>
           prev.map((n) => ({ ...n, status: 'ONLINE' }))
         );
         if (!isMuted) soundFX.playRecovery();
-        addLog('RECOVERY', 'CLUSTER HEALED: All network partitions removed and nodes restored.');
+        addLog('RECOVERY', 'CLUSTER FULLY HEALED: All network partitions cleared and nodes revived.');
         break;
       }
 
@@ -259,7 +320,6 @@ export default function App() {
   // Click on a node to toggle crash/revive
   const handleNodeClick = (nodeId) => {
     soundFX.playClick();
-    const target = nodes.find((n) => n.id === nodeId);
     setNodes((prev) =>
       prev.map((n) =>
         n.id === nodeId
@@ -267,60 +327,57 @@ export default function App() {
           : n
       )
     );
+    const target = nodes.find((n) => n.id === nodeId);
     if (target && target.status === 'ONLINE') {
-        if (!isMuted) soundFX.playAlarm();
-      addLog('CHAOS', `Manual Toggle: Node ${nodeId} crashed.`);
+      addLog('CHAOS', `Manual Toggle: Server ${nodeId} crashed.`);
     } else {
-        if (!isMuted) soundFX.playRecovery();
-      addLog('RECOVERY', `Manual Toggle: Node ${nodeId} revived.`);
+      addLog('RECOVERY', `Manual Toggle: Server ${nodeId} revived.`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-slate-950">
+    <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col transition-all duration-300 ${
+      screenAlert ? 'ring-8 ring-rose-500/40 ring-inset' : ''
+    }`}>
       {/* Top Navigation Bar */}
-      <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50 px-6 py-3.5">
+      <header className="border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-xl sticky top-0 z-50 px-6 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
               <Cpu className="w-6 h-6 text-slate-950 font-bold" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-lg tracking-tight text-slate-100">
-                  Chaos<span className="text-cyan-400">Whisper</span>
+                <h1 className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-100 via-cyan-100 to-slate-400 bg-clip-text text-transparent">
+                  ChaosWhisper
                 </h1>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold">
-                  RAFT LAB
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-bold">
+                  v2.0-ULTRA
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Distributed systems failure simulator
+              <p className="text-xs text-slate-400 font-mono">
+                Voice-Driven Distributed Systems Resiliency Cockpit
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Wispr Flow Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
-              <span className="relative flex h-2 w-2">
+            {/* Wispr Flow Live Indicator */}
+            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-cyan-500/40 text-xs text-slate-200 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+              <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
               <Mic className="w-3.5 h-3.5 text-cyan-400" />
-              <span>VOICE CONTROL READY</span>
+              <span>Built with <strong>Wispr Flow</strong></span>
             </div>
 
-            <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-emerald-400 uppercase tracking-wider">
-              <Activity className="w-3.5 h-3.5" />
-              Live simulation
-            </div>
             <button
               onClick={() => handleExecuteAction('HEAL_ALL', null, 'Reset All')}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-slate-300 flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono font-bold text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer shadow-lg"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Reset Cluster
+              Reset All
             </button>
           </div>
         </div>
@@ -328,14 +385,14 @@ export default function App() {
 
       {/* Main Cockpit Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-5">
-        {/* Real-time Telemetry Metrics */}
+        {/* Dynamic Mission Status & Glassmorphism Metrics */}
         <MetricsPanel
           term={term}
           quorumCount={onlineCount}
           totalNodes={nodes.length}
           latency={latency}
           leaderId={activeLeaderId}
-          status={activeLeaderId ? 'HEALTHY' : 'ELECTION'}
+          isDdosActive={isDdosActive}
         />
 
         {/* Center Grid: Cluster Canvas (Left) + Live Event Log (Right) */}
@@ -348,6 +405,7 @@ export default function App() {
               onNodeClick={handleNodeClick}
               activeLeaderId={activeLeaderId}
               term={term}
+              isDdosActive={isDdosActive}
             />
           </div>
 
@@ -356,7 +414,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Bottom Control Deck: Voice Control Plane + Chaos Injections */}
+        {/* Bottom Control Deck: Continuous Voice Control + Chaos Injections */}
         <ControlDeck
           onExecuteAction={handleExecuteAction}
           lastVoiceCmd={lastVoiceCmd}
@@ -369,8 +427,8 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/60 py-4 px-6 text-center text-xs text-slate-500 font-mono">
-        <span>ChaosWhisper · Raft Consensus Simulator · Powered by Voice-Driven Development</span>
+      <footer className="border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500 font-mono">
+        <span>ChaosWhisper 2.0 · Voice-Driven Cloud Infrastructure Operations · Built hands-free with Wispr Flow</span>
       </footer>
     </div>
   );
