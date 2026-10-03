@@ -40,6 +40,22 @@ The loss counter is an illustrative scenario estimate, not a production finance 
 ### 5. 🌐 Read-Only HTTP Resilience Probe
 * Input an HTTP/REST health endpoint and send a small GET burst to measure browser-observed latency, timeouts, and status codes. It does not mutate or attack the target service.
 
+### 6. 🎯 Readiness Board
+* Run repeatable checkout, leader-failover, and regional-failover rehearsals with explicit objectives.
+* Complete a drill only after restoring the simulation, then carry the evidence into the exported report.
+* This turns a flashy incident demo into a repeatable practice loop for onboarding, game days, and reliability reviews.
+
+## 🚀 Product Direction
+
+ChaosWhisper is intentionally a safe browser prototype today. A practical future product could serve engineering teams with:
+
+* **Team rehearsal plans:** Shared scenario libraries, owners, schedules, and completion history.
+* **Evidence-backed readiness:** Compare recovery time, quorum safety, and business-impact assumptions across teams and releases.
+* **Integrations:** Import service maps and health checks from existing observability tools, while keeping destructive actions behind explicit approvals.
+* **Commercial model:** A free local simulator for learning, with paid team workspaces for collaboration, private scenario libraries, reporting, and audit history.
+
+The product thesis is simple: teams should practice failure response before an incident, and leave each practice session with measurable evidence and a next action.
+
 ---
 
 ## 🎙️ Spoken Chaos & Incident Rehearsal Commands

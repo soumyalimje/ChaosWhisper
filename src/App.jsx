@@ -5,6 +5,7 @@ import MetricsPanel from './components/MetricsPanel';
 import EventLog from './components/EventLog';
 import PostMortemModal from './components/PostMortemModal';
 import RealWorldProbe from './components/RealWorldProbe';
+import ReadinessBoard from './components/ReadinessBoard';
 import { soundFX } from './utils/audioEffects';
 import { aiVoice } from './utils/aiVoice';
 import { Cpu, Mic, RefreshCw, FileText, Globe, Layers, Flame, DollarSign } from 'lucide-react';
@@ -55,6 +56,8 @@ export default function App() {
   const [showRealWorldProbe, setShowRealWorldProbe] = useState(false);
   const [mttrHistory, setMttrHistory] = useState([850, 920, 780]);
   const [totalDowntimeLoss, setTotalDowntimeLoss] = useState(0);
+  const [activeScenario, setActiveScenario] = useState(null);
+  const [completedScenarios, setCompletedScenarios] = useState([]);
 
   const [logs, setLogs] = useState([
     { id: 1, time: '12:00:01', type: 'HEARTBEAT', message: 'Incident rehearsal initialized: simulated e-commerce service mesh operational.' },
@@ -89,6 +92,21 @@ export default function App() {
       { id: Date.now() + Math.random(), time: timeStr, type, message }
     ]);
   }, []);
+
+  const runReadinessScenario = useCallback((scenario) => {
+    setActiveScenario(scenario.id);
+    addLog('CHAOS', `READINESS DRILL: ${scenario.label} started. Objective: ${scenario.objective}`);
+    handleExecuteAction(scenario.action.type, scenario.action.payload, scenario.action.voice);
+  }, [addLog]);
+
+  const completeReadinessScenario = useCallback(() => {
+    handleExecuteAction('HEAL_ALL', null, 'Readiness drill: Restore and complete');
+    if (activeScenario) {
+      setCompletedScenarios((prev) => prev.includes(activeScenario) ? prev : [...prev, activeScenario]);
+      addLog('RECOVERY', `READINESS DRILL COMPLETE: ${activeScenario} evidence recorded.`);
+      setActiveScenario(null);
+    }
+  }, [activeScenario, addLog]);
 
   // Financial Loss Calculation per minute
   let financialLossPerMin = 0;
@@ -637,6 +655,13 @@ export default function App() {
           onOpenReport={() => setShowReportModal(true)}
         />
 
+        <ReadinessBoard
+          activeScenario={activeScenario}
+          completedScenarios={completedScenarios}
+          onRunScenario={runReadinessScenario}
+          onHeal={completeReadinessScenario}
+        />
+
         {/* Read-only HTTP probe panel (when toggled) */}
         {showRealWorldProbe && (
           <RealWorldProbe onLogEvent={addLog} />
@@ -693,6 +718,7 @@ export default function App() {
         logs={logs}
         mttrHistory={mttrHistory}
         resiliencyScore={resiliencyScore}
+        completedScenarios={completedScenarios}
       />
 
       {/* Footer */}

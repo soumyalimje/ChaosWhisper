@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Copy, Check, Download, X, ShieldAlert, Award, Clock, ArrowRight } from 'lucide-react';
 
-export function generatePostMortemContent({ nodes, term, logs, mttrHistory, resiliencyScore }) {
+export function generatePostMortemContent({ nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios = [] }) {
   const dateStr = new Date().toISOString();
   const leader = nodes.find((n) => n.role === 'LEADER' && n.status === 'ONLINE');
   const onlineCount = nodes.filter((n) => n.status === 'ONLINE').length;
@@ -25,6 +25,7 @@ During this rehearsal, the browser simulation was subjected to voice- or text-tr
 * **Current Operational Leader:** Server ${leader ? leader.id : 'N/A (Election In Flight)'}
 * **Cluster Quorum Health:** ${onlineCount}/5 nodes operational (${Math.round((onlineCount / 5) * 100)}%)
 * **Average Mean Time to Recovery (MTTR):** ${avgMttr}ms (measured within this rehearsal)
+* **Readiness Scenarios Completed:** ${completedScenarios.length}/3
 
 ---
 
@@ -53,12 +54,12 @@ ${logs.slice(-10).map((l) => `| ${l.time} | \`${l.type}\` | ${l.message} |`).joi
 `;
 }
 
-export default function PostMortemModal({ isOpen, onClose, nodes, term, logs, mttrHistory, resiliencyScore }) {
+export default function PostMortemModal({ isOpen, onClose, nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios = [] }) {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
-  const markdownContent = generatePostMortemContent({ nodes, term, logs, mttrHistory, resiliencyScore });
+  const markdownContent = generatePostMortemContent({ nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios });
 
   const handleCopy = () => {
     navigator.clipboard.writeText(markdownContent);
