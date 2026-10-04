@@ -81,7 +81,8 @@ export default function ReadinessBoard({ activeScenario, completedScenarios, onR
               <p className="text-[10px] leading-relaxed text-slate-400 mt-2 min-h-8">{scenario.objective}</p>
               <button
                 onClick={() => onRunScenario(scenario)}
-                className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg border border-cyan-700/60 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-200 px-2 py-2 text-[10px] font-mono font-bold transition-colors"
+                disabled={Boolean(activeScenario && !isActive)}
+                className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg border border-cyan-700/60 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-200 px-2 py-2 text-[10px] font-mono font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <Play className="w-3 h-3" />
                 {isComplete ? 'Run again' : scenario.actionLabel}

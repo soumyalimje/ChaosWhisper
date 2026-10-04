@@ -78,6 +78,9 @@ export default function App() {
   const lastLeaderHeartbeatRef = useRef(Date.now());
   const electionRetryAtRef = useRef(0);
   const disasterStartTimeRef = useRef(0);
+  const activeScenarioRef = useRef(activeScenario);
+  activeScenarioRef.current = activeScenario;
+  const executeActionRef = useRef(null);
 
   const triggerScreenAlert = () => {
     setScreenAlert(true);
@@ -94,19 +97,16 @@ export default function App() {
   }, []);
 
   const runReadinessScenario = useCallback((scenario) => {
+    if (activeScenarioRef.current) return;
     setActiveScenario(scenario.id);
     addLog('CHAOS', `READINESS DRILL: ${scenario.label} started. Objective: ${scenario.objective}`);
-    handleExecuteAction(scenario.action.type, scenario.action.payload, scenario.action.voice);
+    executeActionRef.current?.(scenario.action.type, scenario.action.payload, scenario.action.voice);
   }, [addLog]);
 
   const completeReadinessScenario = useCallback(() => {
-    handleExecuteAction('HEAL_ALL', null, 'Readiness drill: Restore and complete');
-    if (activeScenario) {
-      setCompletedScenarios((prev) => prev.includes(activeScenario) ? prev : [...prev, activeScenario]);
-      addLog('RECOVERY', `READINESS DRILL COMPLETE: ${activeScenario} evidence recorded.`);
-      setActiveScenario(null);
-    }
-  }, [activeScenario, addLog]);
+    if (!activeScenarioRef.current) return;
+    executeActionRef.current?.('HEAL_ALL', null, 'Readiness drill: Restore and complete');
+  }, []);
 
   // Financial Loss Calculation per minute
   let financialLossPerMin = 0;
@@ -491,6 +491,12 @@ export default function App() {
         setLatency(18);
         if (!isMuted) soundFX.playRecovery();
         addLog('RECOVERY', 'SIMULATION RESET COMPLETE: All modeled services, regions, and consensus nodes restored.');
+        if (activeScenarioRef.current) {
+          const scenarioId = activeScenarioRef.current;
+          setCompletedScenarios((prev) => prev.includes(scenarioId) ? prev : [...prev, scenarioId]);
+          addLog('RECOVERY', `READINESS DRILL COMPLETE: ${scenarioId} evidence recorded.`);
+          setActiveScenario(null);
+        }
         break;
       }
 
@@ -530,6 +536,8 @@ export default function App() {
         break;
     }
   }, [addLog, isMuted, triggerElection, resiliencyScore, activeTopology, financialLossPerMin, totalDowntimeLoss]);
+
+  executeActionRef.current = handleExecuteAction;
 
   // Click handlers for canvas items
   const handleServiceClick = (serviceId) => {
@@ -642,6 +650,19 @@ export default function App() {
 
       {/* Main Cockpit Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-5">
+        <div className="max-w-3xl">
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-400 mb-1">Practice before production</div>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-100">Turn failure response into measurable readiness.</h2>
+          <p className="text-xs md:text-sm text-slate-400 mt-1">Choose a rehearsal, observe the blast radius, then restore the system and export evidence your team can act on.</p>
+        </div>
+
+        <ReadinessBoard
+          activeScenario={activeScenario}
+          completedScenarios={completedScenarios}
+          onRunScenario={runReadinessScenario}
+          onHeal={completeReadinessScenario}
+        />
+
         {/* Dynamic Mission Status & Glassmorphism Metrics with Resiliency Score */}
         <MetricsPanel
           term={term}
@@ -653,13 +674,6 @@ export default function App() {
           resiliencyScore={resiliencyScore}
           avgMttr={avgMttr}
           onOpenReport={() => setShowReportModal(true)}
-        />
-
-        <ReadinessBoard
-          activeScenario={activeScenario}
-          completedScenarios={completedScenarios}
-          onRunScenario={runReadinessScenario}
-          onHeal={completeReadinessScenario}
         />
 
         {/* Read-only HTTP probe panel (when toggled) */}

@@ -96,6 +96,31 @@ export function parseVoiceCommand(transcript, isFinal = false) {
     };
   }
 
+  // Readiness Board scenario shortcuts
+  if (text.includes('payment drill') || text.includes('checkout drill')) {
+    return {
+      action: 'CRASH_SERVICE',
+      serviceId: 'payments',
+      label: 'Run Checkout Outage Rehearsal',
+      speechResponse: 'Starting checkout outage rehearsal. Payment dependency failure simulated.'
+    };
+  }
+  if (text.includes('leader drill') || text.includes('failover drill')) {
+    return {
+      action: 'CRASH_LEADER',
+      label: 'Run Leader Failover Rehearsal',
+      speechResponse: 'Starting leader failover rehearsal. Election timing is now being measured.'
+    };
+  }
+  if (text.includes('region drill') || text.includes('regional drill')) {
+    return {
+      action: 'CRASH_REGION',
+      regionId: 'us-east-1',
+      label: 'Run Regional Failover Rehearsal',
+      speechResponse: 'Starting regional failover rehearsal. Primary region is simulated offline.'
+    };
+  }
+
   // 4. Financial & Downtime Cost Impact Queries
   if (text.includes('financial') || text.includes('cost impact') || text.includes('revenue at risk') || text.includes('money lost') || text.includes('downtime cost')) {
     return {
