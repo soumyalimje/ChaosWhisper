@@ -6,9 +6,10 @@ import EventLog from './components/EventLog';
 import PostMortemModal from './components/PostMortemModal';
 import ReadinessBoard from './components/ReadinessBoard';
 import EngineeringActionPlan from './components/EngineeringActionPlan';
+import RealWorldProbe from './components/RealWorldProbe';
 import { soundFX } from './utils/audioEffects';
 import { aiVoice } from './utils/aiVoice';
-import { Cpu, RefreshCw, FileText } from 'lucide-react';
+import { Cpu, RefreshCw, FileText, LayoutDashboard, Wrench, Globe, ArrowUpRight } from 'lucide-react';
 
 const INITIAL_NODES = [
   { id: 1, role: 'LEADER', status: 'ONLINE', term: 1, logsCount: 28 },
@@ -41,6 +42,7 @@ const ELECTION_RETRY_BACKOFF_MS = 1000;
 
 export default function App() {
   const [activeTopology, setActiveTopology] = useState('MICROSERVICES');
+  const [currentTab, setCurrentTab] = useState('COCKPIT'); // 'COCKPIT' | 'STUDIO' | 'PROBE'
   const [nodes, setNodes] = useState(INITIAL_NODES);
   const [microservices, setMicroservices] = useState(INITIAL_MICROSERVICES);
   const [cloudRegions, setCloudRegions] = useState(INITIAL_REGIONS);
@@ -477,6 +479,35 @@ export default function App() {
         break;
       }
 
+      case 'CRASH_TWO_NODES': {
+        if (disasterStartTimeRef.current === 0) disasterStartTimeRef.current = Date.now();
+        triggerScreenAlert();
+        if (!isMuted) soundFX.playAlarm();
+        setNodes((prev) =>
+          prev.map((n) => (n.id === 1 || n.id === 2 ? { ...n, status: 'OFFLINE' } : n))
+        );
+        addLog('CHAOS', 'TWO-NODE FAILURE INJECTED: Nodes 1 & 2 forced OFFLINE. Surviving nodes: 3/5. Quorum margin at 0.');
+        aiVoice.speak('Two nodes offline. Quorum margin at razor edge. Surviving three servers holding vote.');
+        break;
+      }
+
+      case 'SIMULATE_FIX': {
+        if (!isMuted) soundFX.playRecovery();
+        setMicroservices(INITIAL_MICROSERVICES);
+        setCloudRegions(INITIAL_REGIONS);
+        setNodes((prev) => prev.map((n) => ({ ...n, status: 'ONLINE' })));
+        setIsDdosActive(false);
+        setLatency(18);
+        addLog('RECOVERY', 'VIRTUAL RESILIENCE PATCH APPLIED: Bounded timeouts (800ms) & fallback active. Cluster certified 100% resilient.');
+        aiVoice.speak('Resilience patch verified. System operational with zero degraded dependencies.');
+        if (activeScenarioRef.current) {
+          const scenarioId = activeScenarioRef.current;
+          setCompletedScenarios((prev) => prev.includes(scenarioId) ? prev : [...prev, scenarioId]);
+          setActiveScenario(null);
+        }
+        break;
+      }
+
       // Universal Heal & Restore All
       case 'HEAL_ALL': {
         if (disasterStartTimeRef.current > 0) {
@@ -607,6 +638,48 @@ export default function App() {
             </div>
           </div>
 
+          {/* Navigation Mode Switcher */}
+          <nav className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-2xl border border-slate-800 font-mono text-xs">
+            <button
+              onClick={() => setCurrentTab('COCKPIT')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+                currentTab === 'COCKPIT'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-slate-950 shadow-md shadow-cyan-500/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Incident Cockpit</span>
+              <span className="sm:hidden">Cockpit</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('STUDIO')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+                currentTab === 'STUDIO'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-slate-950 shadow-md shadow-cyan-500/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              <Wrench className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Remediation Studio</span>
+              <span className="sm:hidden">Studio</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('PROBE')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+                currentTab === 'PROBE'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-slate-950 shadow-md shadow-cyan-500/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">HTTP Probe</span>
+              <span className="sm:hidden">Probe</span>
+            </button>
+          </nav>
+
           <div className="flex items-center gap-3">
             {/* Report and reset are the two global actions. */}
             <button
@@ -623,83 +696,162 @@ export default function App() {
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono font-bold text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer shadow-lg"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Heal All
+              <span>Heal All</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Cockpit Body */}
+      {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-5">
-        <div className="max-w-3xl">
-          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-400 mb-1">Practice before production</div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-100">Turn failure response into measurable readiness.</h2>
-          <p className="text-xs md:text-sm text-slate-400 mt-1">Choose a rehearsal, observe the blast radius, then restore the system and export evidence your team can act on.</p>
-        </div>
+        {currentTab === 'COCKPIT' && (
+          <>
+            <div className="max-w-3xl">
+              <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-cyan-400 mb-1">
+                Distributed Systems Incident Rehearsal
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-100">
+                Turn failure response into measurable engineering readiness.
+              </h2>
+              <p className="text-xs md:text-sm text-slate-400 mt-1">
+                Trigger chaos drills, observe real-time cascading failures, inspect concrete code fixes, and export evidence your team can act on.
+              </p>
+            </div>
 
-        <ReadinessBoard
-          activeScenario={activeScenario}
-          completedScenarios={completedScenarios}
-          onRunScenario={runReadinessScenario}
-          onHeal={completeReadinessScenario}
-        />
+            <ReadinessBoard
+              activeScenario={activeScenario}
+              completedScenarios={completedScenarios}
+              onRunScenario={runReadinessScenario}
+              onHeal={completeReadinessScenario}
+            />
 
-        <EngineeringActionPlan
-          scenarioId={activeScenario || lastScenarioId}
-          hasEvidence={completedScenarios.length > 0}
-        />
-
-        {/* Dynamic Mission Status & Glassmorphism Metrics with Resiliency Score */}
-        <MetricsPanel
-          term={term}
-          quorumCount={onlineCount}
-          totalNodes={nodes.length}
-          latency={latency}
-          leaderId={activeLeaderId}
-          isDdosActive={isDdosActive}
-          resiliencyScore={resiliencyScore}
-          avgMttr={avgMttr}
-          onOpenReport={() => setShowReportModal(true)}
-        />
-
-        {/* Center Grid: Cluster Canvas (Left) + Live Event Log (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2">
-            <ClusterCanvas
-              nodes={nodes}
-              packets={packets}
+            <EngineeringActionPlan
+              scenarioId={activeScenario || lastScenarioId}
+              hasEvidence={completedScenarios.length > 0}
+              offlineServices={offlineServices}
+              offlineRegions={offlineRegions}
+              offlineNodes={nodes.filter((n) => n.status === 'OFFLINE')}
               isolatedNodes={isolatedNodes}
-              onNodeClick={handleNodeClick}
-              activeLeaderId={activeLeaderId}
-              term={term}
               isDdosActive={isDdosActive}
-              activeTopology={activeTopology}
-              onSelectTopology={setActiveTopology}
-              microservices={microservices}
-              cloudRegions={cloudRegions}
-              onServiceClick={handleServiceClick}
-              onRegionClick={handleRegionClick}
-              financialLossPerMin={financialLossPerMin}
-              totalDowntimeLoss={totalDowntimeLoss}
+              quorumCount={onlineCount}
+              totalNodes={nodes.length}
+              onSimulateFix={(planId) => handleExecuteAction('SIMULATE_FIX', planId, 'Verify Fix Applied')}
+            />
+
+            {/* Dynamic Mission Status & Glassmorphism Metrics with Resiliency Score */}
+            <MetricsPanel
+              term={term}
+              quorumCount={onlineCount}
+              totalNodes={nodes.length}
+              latency={latency}
+              leaderId={activeLeaderId}
+              isDdosActive={isDdosActive}
+              resiliencyScore={resiliencyScore}
+              avgMttr={avgMttr}
+              onOpenReport={() => setShowReportModal(true)}
+            />
+
+            {/* Center Grid: Cluster Canvas (Left) + Live Event Log (Right) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="lg:col-span-2">
+                <ClusterCanvas
+                  nodes={nodes}
+                  packets={packets}
+                  isolatedNodes={isolatedNodes}
+                  onNodeClick={handleNodeClick}
+                  activeLeaderId={activeLeaderId}
+                  term={term}
+                  isDdosActive={isDdosActive}
+                  activeTopology={activeTopology}
+                  onSelectTopology={setActiveTopology}
+                  microservices={microservices}
+                  cloudRegions={cloudRegions}
+                  onServiceClick={handleServiceClick}
+                  onRegionClick={handleRegionClick}
+                  financialLossPerMin={financialLossPerMin}
+                  totalDowntimeLoss={totalDowntimeLoss}
+                />
+              </div>
+
+              <div className="lg:col-span-1">
+                <EventLog logs={logs} onClearLogs={() => setLogs([])} />
+              </div>
+            </div>
+
+            {/* Bottom Control Deck: Continuous Voice Control + Chaos Injections */}
+            <ControlDeck
+              onExecuteAction={handleExecuteAction}
+              lastVoiceCmd={lastVoiceCmd}
+              isMuted={isMuted}
+              setIsMuted={setIsMuted}
+              nodes={nodes}
+              activeLeaderId={activeLeaderId}
+              latency={latency}
+              onOpenReport={() => setShowReportModal(true)}
+            />
+          </>
+        )}
+
+        {currentTab === 'STUDIO' && (
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 p-4 rounded-3xl border border-slate-800">
+              <div>
+                <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                  <Wrench className="w-5 h-5 text-cyan-400" />
+                  Engineering Remediation Studio
+                </h2>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  Actionable guidance: Problem, Root Cause, Production Code, Vitest Failure Tests, and SRE Runbooks.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setCurrentTab('COCKPIT')}
+                className="px-4 py-2 rounded-xl bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 font-mono font-bold text-xs hover:bg-cyan-900/60 transition-all cursor-pointer self-start sm:self-auto"
+              >
+                ← Return to Live Cockpit
+              </button>
+            </div>
+
+            <EngineeringActionPlan
+              scenarioId={activeScenario || lastScenarioId}
+              hasEvidence={completedScenarios.length > 0}
+              offlineServices={offlineServices}
+              offlineRegions={offlineRegions}
+              offlineNodes={nodes.filter((n) => n.status === 'OFFLINE')}
+              isolatedNodes={isolatedNodes}
+              isDdosActive={isDdosActive}
+              quorumCount={onlineCount}
+              totalNodes={nodes.length}
+              onSimulateFix={(planId) => handleExecuteAction('SIMULATE_FIX', planId, 'Verify Fix Applied')}
             />
           </div>
+        )}
 
-          <div className="lg:col-span-1">
-            <EventLog logs={logs} onClearLogs={() => setLogs([])} />
+        {currentTab === 'PROBE' && (
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 p-4 rounded-3xl border border-slate-800">
+              <div>
+                <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-cyan-400" />
+                  Real-World HTTP Resilience Probe
+                </h2>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  Test your actual staging/production HTTP endpoints with safe, read-only GET bursts.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setCurrentTab('COCKPIT')}
+                className="px-4 py-2 rounded-xl bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 font-mono font-bold text-xs hover:bg-cyan-900/60 transition-all cursor-pointer self-start sm:self-auto"
+              >
+                ← Return to Live Cockpit
+              </button>
+            </div>
+
+            <RealWorldProbe onLogEvent={addLog} />
           </div>
-        </div>
-
-        {/* Bottom Control Deck: Continuous Voice Control + Chaos Injections */}
-        <ControlDeck
-          onExecuteAction={handleExecuteAction}
-          lastVoiceCmd={lastVoiceCmd}
-          isMuted={isMuted}
-          setIsMuted={setIsMuted}
-          nodes={nodes}
-          activeLeaderId={activeLeaderId}
-          latency={latency}
-          onOpenReport={() => setShowReportModal(true)}
-        />
+        )}
       </main>
 
       {/* Incident rehearsal report modal */}

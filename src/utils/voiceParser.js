@@ -105,6 +105,27 @@ export function parseVoiceCommand(transcript, isFinal = false) {
       speechResponse: 'Starting checkout outage rehearsal. Payment dependency failure simulated.'
     };
   }
+  if (text.includes('circuit drill') || text.includes('breaker drill')) {
+    return {
+      action: 'TRIP_BREAKER',
+      label: 'Run Circuit Breaker Fallback Drill',
+      speechResponse: 'Circuit breakers opened. Measuring fast-fail fallback behavior.'
+    };
+  }
+  if (text.includes('two node') || text.includes('2 node')) {
+    return {
+      action: 'CRASH_TWO_NODES',
+      label: 'Run Two-Node Consensus Drill',
+      speechResponse: 'Simulating two-node cluster failure. Verifying surviving quorum of three.'
+    };
+  }
+  if (text.includes('quorum drill') || text.includes('quorum alert') || text.includes('quorum loss')) {
+    return {
+      action: 'CASCADE_FAILURE',
+      label: 'Run Quorum Collapse Alert Drill',
+      speechResponse: 'Quorum lost! Three nodes down. Fencing writes to prevent split brain.'
+    };
+  }
   if (text.includes('leader drill') || text.includes('failover drill')) {
     return {
       action: 'CRASH_LEADER',
@@ -118,6 +139,13 @@ export function parseVoiceCommand(transcript, isFinal = false) {
       regionId: 'us-east-1',
       label: 'Run Regional Failover Rehearsal',
       speechResponse: 'Starting regional failover rehearsal. Primary region is simulated offline.'
+    };
+  }
+  if (text.includes('verify fix') || text.includes('simulate fix') || text.includes('apply patch')) {
+    return {
+      action: 'SIMULATE_FIX',
+      label: 'Simulate Fix & Verify Cluster',
+      speechResponse: 'Applying resilience patch. Verifying cluster recovery and SLO metrics.'
     };
   }
 

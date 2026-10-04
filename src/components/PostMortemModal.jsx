@@ -51,24 +51,37 @@ ${logs.slice(-10).map((l) => `| ${l.time} | \`${l.type}\` | ${l.message} |`).joi
 2. **Network Partition Resiliency:** Pre-configure witness nodes or lease-read mechanisms to minimize stale read probabilities during minority isolation.
 3. **Automated Rollback:** Enforce automated traffic throttling when P99 RPC latency spikes above $250ms$ during DDoS storms.
 
-## 5. Engineering Follow-up
-**Problem:** ${engineeringPlan.problem}
+## 5. Concrete Engineering Remediation Plan (5 Core Pillars)
+### 1. Problem Kya Hai (Observed Failure)
+${engineeringPlan.problem}
 
-**Recommended change:** ${engineeringPlan.change}
+### 2. Problem Kyun Hui (Root Cause Analysis)
+${engineeringPlan.why}
 
-**Verification test:** ${engineeringPlan.test}
-
-**Success signal:** ${engineeringPlan.verify}
-
-### Implementation sketch
-\`\`\`js
+### 3. Code Mein Kya Change Karna Chahiye (Production Patch)
+\`\`\`${engineeringPlan.codeLang || 'typescript'}
 ${engineeringPlan.code}
 \`\`\`
 
-**Suggested issue:** ${engineeringPlan.issue}
+### 4. Kaunsa Test Likhna Chahiye (Failure Injection Test)
+\`\`\`typescript
+${engineeringPlan.test}
+\`\`\`
+
+### 5. Fix Ke Baad Improvement Kaise Verify Karni Hai (SLO & Signals)
+${engineeringPlan.verify}
+
+---
+
+## 6. SRE Operational Runbook & Alert Configuration
+${engineeringPlan.runbook}
+
+**Estimated Business Value Protected:** ${engineeringPlan.roi || 'High Availability'}
+**Suggested GitHub/Jira Issue:** \`${engineeringPlan.issue}\`
 
 ---
 *Report compiled by ChaosWhisper from simulated state and event history.*
+
 `;
 }
 

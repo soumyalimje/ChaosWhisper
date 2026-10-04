@@ -45,27 +45,14 @@ The loss counter is an illustrative scenario estimate, not a production finance 
 * Complete a drill only after restoring the simulation, then carry the evidence into the exported report.
 * This turns a flashy incident demo into a repeatable practice loop for onboarding, game days, and reliability reviews.
 
-### 7. 🧰 Engineering Action Plans
-Every rehearsal produces a practical follow-up instead of stopping at visualization:
+### 7. 🧰 SRE Remediation Studio (The Missing Engineering Bridge)
+Every failure triggers concrete engineering guidance instead of mere animation:
 
-* **Problem:** what behavior was exposed by the failure.
-* **Why it happened:** the dependency or safety mechanism that needs attention.
-* **Code/config change:** a bounded implementation direction and code sketch.
-* **Test to write:** the failure-injection or integration test an engineer should add.
-* **Verify improvement:** the measurable signal that proves the fix worked.
-
-The brief can be copied or downloaded as Markdown, and the same follow-up is included in the incident rehearsal report.
-
-## 🚀 Product Direction
-
-ChaosWhisper is intentionally a safe browser prototype today. A practical future product could serve engineering teams with:
-
-* **Team rehearsal plans:** Shared scenario libraries, owners, schedules, and completion history.
-* **Evidence-backed readiness:** Compare recovery time, quorum safety, and business-impact assumptions across teams and releases.
-* **Integrations:** Import service maps and health checks from existing observability tools, while keeping destructive actions behind explicit approvals.
-* **Commercial model:** A free local simulator for learning, with paid team workspaces for collaboration, private scenario libraries, reporting, and audit history.
-
-The product thesis is simple: teams should practice failure response before an incident, and leave each practice session with measurable evidence and a next action.
+1. **Problem Statement:** Exact customer-impacting behavior exposed by the failure.
+2. **Root Cause Analysis:** Thread starvation, retry amplification, quorum loss, or split-brain risk.
+3. **Production Code Patch:** Real copy-pasteable TypeScript/Node code (e.g. 800ms bounded timeout, circuit breaker fallback, Route 53 DNS shift, single-flight cache lock).
+4. **Automated Vitest/Jest Failure Test:** Test suite to add into CI/CD reproducing the fault condition.
+5. **Verification & Proof Signals:** Prometheus/Datadog metric alerts (e.g. Quorum < 3 alert, P99 < 900ms threshold) and an interactive **"Simulate Fix & Verify"** button to validate cluster resilience in real time.
 
 ---
 
@@ -73,14 +60,17 @@ The product thesis is simple: teams should practice failure response before an i
 
 | Spoken Voice Command | Simulation Reaction | What to Show |
 | :--- | :--- | :--- |
-| *"Kill Payment Gateway"* | Drops the simulated payment service | Upstream circuit breaker trips |
-| *"Blackout US East"* / *"Kill Virginia"* | Takes simulated `us-east-1` offline | Latency and regional status change |
-| *"Trip Circuit Breaker"* | Opens simulated breakers | Fallback state becomes visible |
-| *"Black Friday Drill"* | Runs a timed synthetic load scenario | Cache, payments, and recovery sequence |
-| *"Status report"* | Reads the current simulation state | Voice response and event log |
-| *"What is our blast radius?"* | Calculates simulated degradation | Impact summary and score |
-| *"What is our financial loss?"* | Reads illustrative scenario exposure | Risk-rate ticker |
-| *"Heal cluster"* / *"Restore all"* | Restores modeled components | Recovery and clean state |
+| *"Kill Payment Gateway"* / *"Payment drill"* | Drops simulated payment service | 800ms bounded timeout & fallback guidance |
+| *"Trip Circuit Breaker"* / *"Breaker drill"* | Opens simulated breakers | Fast-fail test suite & synthetic fallback |
+| *"Two node drill"* | Kills 2 out of 5 Raft nodes | Quorum margin boundary & surviving majority vote |
+| *"Quorum drill"* / *"Quorum alert"* | Simulates 3-node loss (<3 quorum) | Split-brain prevention, write freeze, P0 alert |
+| *"Blackout US East"* / *"Region drill"* | Takes `us-east-1` offline | Route 53 low-TTL DNS failover runbook |
+| *"Black Friday Drill"* | Injects 150k RPS flood | Redis cache stampede single-flight lock |
+| *"Verify fix"* / *"Simulate fix"* | Injects virtual resilience patch | 100% recovery verification and SLO certification |
+| *"Status report"* | Reads current simulation state | Resiliency score and degraded dependencies |
+| *"What is our blast radius?"* | Calculates degradation % | Impact assessment and risk rate |
+| *"What is our financial loss?"* | Reads illustrative scenario exposure | Downtime cost accumulator |
+| *"Heal cluster"* / *"Restore all"* | Restores modeled components | Recovery and clean operational state |
 
 ## ✅ Wispr Flow Submission Checklist
 

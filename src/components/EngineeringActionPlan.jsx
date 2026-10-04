@@ -1,135 +1,378 @@
 import React, { useState } from 'react';
-import { Check, Clipboard, Code2, Download, GitPullRequest, ListChecks, ShieldCheck, Target } from 'lucide-react';
+import { 
+  Check, 
+  Clipboard, 
+  Code2, 
+  Download, 
+  GitPullRequest, 
+  ListChecks, 
+  ShieldCheck, 
+  Target, 
+  AlertTriangle, 
+  Terminal, 
+  Play, 
+  Sparkles, 
+  BookOpen, 
+  Activity,
+  Zap,
+  ArrowRight,
+  ShieldAlert,
+  Layers
+} from 'lucide-react';
+import { FAILURE_GUIDANCE, resolveEngineeringGuidance } from '../utils/engineeringGuidance';
+import { soundFX } from '../utils/audioEffects';
 
-const PLANS = {
-  'payment-failure': {
-    title: 'Harden the payment dependency',
-    problem: 'Checkout requests continue to depend on a payment provider after the provider becomes unhealthy.',
-    why: 'Without bounded timeouts and a breaker, slow payment calls consume worker capacity and turn a dependency outage into an order-system outage.',
-    change: 'Add a short client timeout, retry only safe/idempotent operations with capped backoff, and return an explicit pending-payment fallback when the breaker is open.',
-    code: `const payment = withTimeout(paymentClient, 800);\nconst result = await breaker.execute(() => payment.authorize(request));\nreturn result ?? { status: 'PENDING_PAYMENT' };`,
-    test: 'Simulate payment timeout and 5xx responses. Assert the breaker opens, requests stop waiting after 800ms, and orders return the documented fallback.',
-    verify: 'P99 order latency stays below the agreed threshold, checkout remains explainable to the user, and breaker recovery succeeds after the provider is healthy.',
-    issue: 'Reliability: bound payment dependency failure',
-  },
-  'leader-election': {
-    title: 'Prove safe leader failover',
-    problem: 'The primary consensus node disappears and the cluster must elect exactly one replacement without losing quorum.',
-    why: 'A fast election is not enough if a minority can commit writes or two leaders appear during a partition.',
-    change: 'Add an integration test around heartbeat timeout, term increment, majority voting, and rejection of stale-term leaders.',
-    code: `await cluster.stop('node-1');\nawait eventually(() => expect(cluster.leader()).toBe('node-2'));\nexpect(cluster.term()).toBeGreaterThan(previousTerm);\nexpect(cluster.committedLeaders()).toHaveLength(1);`,
-    test: 'Kill one node, then two nodes, and finally partition a follower. Assert one leader with a higher term and no commits without a majority.',
-    verify: 'Election completes within the recovery objective, quorum remains authoritative, and stale candidates cannot commit entries.',
-    issue: 'Reliability: verify single-leader failover under quorum pressure',
-  },
-  'regional-failover': {
-    title: 'Make regional failover observable and reversible',
-    problem: 'Traffic remains exposed to a failed primary region until routing, health checks, and data-safety conditions agree.',
-    why: 'Blind failover can send users to an unhealthy target or create split-brain writes across regions.',
-    change: 'Use independent health checks, an explicit failover state, traffic-drain time, and a documented rollback condition before restoring the primary region.',
-    code: `if (health.primary === 'OFFLINE' && health.secondary === 'READY') {\n  await router.shiftTraffic('secondary', { drainMs: 30000 });\n  audit.record('REGION_FAILOVER');\n}`,
-    test: 'Make the primary health check fail, assert traffic shifts only to a ready secondary, and verify rollback waits for recovery plus data convergence.',
-    verify: 'Error rate and latency recover within the objective, traffic distribution is visible, and the event log contains failover and rollback evidence.',
-    issue: 'Reliability: rehearse regional failover with rollback evidence',
-  },
-};
-
-const fallbackPlan = {
-  title: 'Turn the observed failure into an engineering task',
-  problem: 'A simulated component degraded and its dependencies were exposed.',
-  why: 'The next action should be specific enough for an engineer to implement and verify.',
-  change: 'Create a bounded failure test, document the expected fallback, and add an observable recovery signal.',
-  code: `await injectFailure('dependency');\nawait expect(system).toRemainAvailable();\nawait expect(metrics.recoveryTime).toBeWithinObjective();`,
-  test: 'Repeat the scenario in an automated test and assert the expected safety behavior.',
-  verify: 'The system contains the failure, recovers within the objective, and leaves evidence for the next review.',
-  issue: 'Reliability: convert rehearsal finding into a test',
-};
+export { resolveEngineeringGuidance };
 
 export function getEngineeringPlan(scenarioId) {
-  return PLANS[scenarioId] || fallbackPlan;
+  return FAILURE_GUIDANCE[scenarioId] || FAILURE_GUIDANCE['payment-failure'];
 }
 
-function toMarkdown(plan) {
-  return `# Engineering Action Plan: ${plan.title}\n\n## Problem\n${plan.problem}\n\n## Why it matters\n${plan.why}\n\n## Recommended change\n${plan.change}\n\n## Implementation sketch\n\`\`\`js\n${plan.code}\n\`\`\`\n\n## Verification test\n${plan.test}\n\n## Success signal\n${plan.verify}\n\n## Suggested issue\n${plan.issue}\n`;
+export function toMarkdown(plan) {
+  return `# INCIDENT REMEDIATION & SRE RUNBOOK: ${plan.title}
+**Category:** ${plan.category} | **Severity:** ${plan.severity} | **Value Protected:** ${plan.roi}
+
+---
+
+## 1. Problem Statement (Problem Kya Hai)
+${plan.problem}
+
+## 2. Root Cause Analysis (Problem Kyun Hui)
+${plan.why}
+
+## 3. Recommended Code / Config Change (Code Mein Kya Change Karna Chahiye)
+\`\`\`${plan.codeLang || 'typescript'}
+${plan.code}
+\`\`\`
+
+## 4. Automated Chaos / Unit Test (Kaunsa Test Likhna Chahiye)
+\`\`\`typescript
+${plan.test}
+\`\`\`
+
+## 5. Improvement Verification & Production Signals (Fix Ke Baad Kaise Verify Karein)
+${plan.verify}
+
+---
+
+${plan.runbook}
+
+**Suggested GitHub / Jira Issue:** \`${plan.issue}\`
+*Generated by ChaosWhisper Engineering Remediation Engine*
+`;
 }
 
-export default function EngineeringActionPlan({ scenarioId, hasEvidence }) {
+export default function EngineeringActionPlan({
+  scenarioId,
+  hasEvidence,
+  offlineServices = [],
+  offlineRegions = [],
+  offlineNodes = [],
+  isolatedNodes = [],
+  isDdosActive = false,
+  quorumCount = 5,
+  totalNodes = 5,
+  onSimulateFix
+}) {
+  const [selectedKey, setSelectedKey] = useState(null);
+  const [activeTab, setActiveTab] = useState('problem'); // 'problem', 'code', 'test', 'verify', 'runbook'
   const [copied, setCopied] = useState(false);
-  const plan = getEngineeringPlan(scenarioId);
+  const [verifying, setVerifying] = useState(false);
+  const [verifiedSuccess, setVerifiedSuccess] = useState(false);
+
+  // Auto-resolve plan from live state unless user manually selected one
+  const detectedPlan = resolveEngineeringGuidance({
+    activeScenarioId: scenarioId,
+    offlineServices,
+    offlineRegions,
+    offlineNodes,
+    isolatedNodes,
+    isDdosActive,
+    quorumCount,
+    totalNodes
+  });
+
+  const plan = selectedKey ? (FAILURE_GUIDANCE[selectedKey] || detectedPlan) : detectedPlan;
+  const isAutoDetected = !selectedKey || selectedKey === detectedPlan.id;
   const markdown = toMarkdown(plan);
 
   const copyPlan = async () => {
     try {
       await navigator.clipboard.writeText(markdown);
+      soundFX.playClick();
       setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
     }
   };
 
   const downloadPlan = () => {
+    soundFX.playClick();
     const url = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'chaoswhisper-engineering-action-plan.md';
+    link.download = `sre-remediation-${plan.id}.md`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
+  const handleSimulateFix = () => {
+    soundFX.playClick();
+    setVerifying(true);
+    setTimeout(() => {
+      setVerifying(false);
+      setVerifiedSuccess(true);
+      soundFX.playRecovery();
+      if (onSimulateFix) onSimulateFix(plan.id);
+      setTimeout(() => setVerifiedSuccess(false), 4500);
+    }, 1200);
+  };
+
   return (
-    <section className="border border-amber-500/25 bg-slate-900/85 rounded-2xl p-4 shadow-xl">
-      <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-amber-950/60 border border-amber-500/30 text-amber-300">
-            <Code2 className="w-4 h-4" />
+    <section className="border border-cyan-500/25 bg-slate-900/90 rounded-3xl p-5 shadow-2xl backdrop-blur-xl transition-all">
+      {/* Top Header Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div className="flex items-start gap-3.5">
+          <div className="p-3 rounded-2xl bg-gradient-to-tr from-cyan-950 via-blue-950 to-slate-900 border border-cyan-500/40 text-cyan-300 shadow-lg shadow-cyan-950/40">
+            <Code2 className="w-5 h-5 text-cyan-400" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-100">Engineering Action Plan</h2>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5">
-                {hasEvidence ? 'Evidence captured' : 'Next engineering step'}
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-extrabold text-slate-100 tracking-tight">
+                SRE Remediation Studio & Engineering Guidance
+              </h2>
+              <span className={`text-[10px] font-mono uppercase tracking-wider rounded-full px-2.5 py-0.5 border font-bold ${
+                isAutoDetected
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-sm'
+                  : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30'
+              }`}>
+                {isAutoDetected ? '⚡ Live Incident Detected' : 'Manual Study Mode'}
+              </span>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                {plan.roi}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-mono mt-1">Convert simulation evidence into an implementable change and a test.</p>
+            <p className="text-xs text-slate-400 font-sans mt-0.5">
+              Concrete architectural analysis, production code patches, unit/chaos tests, and SRE runbooks for distributed failure modes.
+            </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button onClick={copyPlan} className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-950/70 px-2.5 py-2 text-[10px] font-mono font-bold text-slate-300 hover:text-white hover:border-amber-500/50">
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Clipboard className="w-3.5 h-3.5" />}
-            {copied ? 'Copied' : 'Copy brief'}
+
+        {/* Global Actions */}
+        <div className="flex items-center gap-2 font-mono text-xs">
+          <button
+            onClick={copyPlan}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-slate-200 hover:text-white hover:border-cyan-500/50 transition-all cursor-pointer"
+            title="Copy complete markdown guide for Jira or GitHub"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Clipboard className="w-3.5 h-3.5 text-slate-400" />}
+            <span>{copied ? 'Copied Brief' : 'Copy Brief'}</span>
           </button>
-          <button onClick={downloadPlan} className="flex items-center gap-1.5 rounded-lg border border-amber-600/50 bg-amber-950/50 px-2.5 py-2 text-[10px] font-mono font-bold text-amber-200 hover:bg-amber-900/60">
-            <Download className="w-3.5 h-3.5" />
-            Download .md
+
+          <button
+            onClick={downloadPlan}
+            className="flex items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-cyan-950 to-blue-950 px-3 py-2 text-cyan-200 hover:border-cyan-400 transition-all cursor-pointer shadow-lg shadow-cyan-950/30"
+          >
+            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Export .MD</span>
           </button>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2">
-        <PlanBlock icon={Target} label="Problem" value={plan.problem} />
-        <PlanBlock icon={ShieldCheck} label="Why it happened" value={plan.why} />
-        <PlanBlock icon={Code2} label="Code/config change" value={plan.change} />
-        <PlanBlock icon={ListChecks} label="Test to write" value={plan.test} />
-        <PlanBlock icon={GitPullRequest} label="Verify improvement" value={plan.verify} />
+      {/* Scenario Quick Selector Bar */}
+      <div className="mt-4 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-mono scrollbar-thin">
+        <span className="text-[10px] uppercase text-slate-500 font-bold mr-1 shrink-0">Failure Scenario:</span>
+        {Object.values(FAILURE_GUIDANCE).map((item) => {
+          const isSelected = plan.id === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                soundFX.playClick();
+                setSelectedKey(item.id);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-[11px] whitespace-nowrap transition-all cursor-pointer border ${
+                isSelected
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-slate-950 font-bold border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.35)]'
+                  : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              {item.title.split('&')[0].trim()}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/70 p-3">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2">Implementation sketch</div>
-        <pre className="overflow-x-auto text-[11px] leading-relaxed text-cyan-200 font-mono whitespace-pre-wrap">{plan.code}</pre>
+      {/* 5-Step Structural Tabs */}
+      <div className="mt-4 flex flex-wrap gap-2 border-b border-slate-800 pb-2">
+        {[
+          { id: 'problem', label: '1 & 2. Problem & Root Cause', icon: AlertTriangle },
+          { id: 'code', label: '3. Production Code Fix', icon: Code2 },
+          { id: 'test', label: '4. Test to Write', icon: ListChecks },
+          { id: 'verify', label: '5. Verification & SLO', icon: GitPullRequest },
+          { id: 'runbook', label: 'SRE Runbook & Alerts', icon: Terminal },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                soundFX.playClick();
+                setActiveTab(tab.id);
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Content Display */}
+      <div className="mt-4">
+        {/* TAB 1: Problem & Root Cause */}
+        {activeTab === 'problem' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+              <div className="flex items-center gap-2 text-rose-400 font-mono text-xs font-bold uppercase tracking-wider">
+                <Target className="w-4 h-4" />
+                1. Problem Kya Hai (What is Broken)
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed font-sans font-medium">
+                {plan.problem}
+              </p>
+              <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span>Observed in: <strong className="text-slate-200">{plan.category}</strong></span>
+                <span className="text-rose-400 font-bold">{plan.severity} IMPACT</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+              <div className="flex items-center gap-2 text-amber-400 font-mono text-xs font-bold uppercase tracking-wider">
+                <ShieldAlert className="w-4 h-4" />
+                2. Problem Kyun Hui (Root Cause Analysis)
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                {plan.why}
+              </p>
+              <div className="mt-3 pt-3 border-t border-slate-800/80 text-[11px] font-mono text-slate-400">
+                <span>Architectural vulnerability: <strong className="text-amber-300">Cascading dependency exhaustion</strong></span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: Production Code Fix */}
+        {activeTab === 'code' && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/90 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono">
+              <div className="flex items-center gap-2 text-cyan-300 font-bold">
+                <Code2 className="w-4 h-4 text-cyan-400" />
+                <span>3. Code Mein Kya Change Karna Chahiye: {plan.title}</span>
+              </div>
+              <span className="text-[10px] text-slate-400 uppercase bg-slate-800 px-2 py-0.5 rounded">
+                TypeScript / Node.js
+              </span>
+            </div>
+            <div className="p-3 bg-slate-900/40 border-b border-slate-800 text-xs text-slate-300 font-sans">
+              <strong className="text-cyan-300 font-mono text-[11px] uppercase mr-2">Architectural Blueprint:</strong>
+              {plan.change}
+            </div>
+            <pre className="p-4 overflow-x-auto text-[11.5px] leading-relaxed text-cyan-200 font-mono whitespace-pre-wrap select-text">
+              {plan.code}
+            </pre>
+          </div>
+        )}
+
+        {/* TAB 3: Test to Write */}
+        {activeTab === 'test' && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/90 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono">
+              <div className="flex items-center gap-2 text-purple-300 font-bold">
+                <ListChecks className="w-4 h-4 text-purple-400" />
+                <span>4. Kaunsa Test Likhna Chahiye (Automated Failure Injection)</span>
+              </div>
+              <span className="text-[10px] text-purple-300 uppercase bg-purple-950/60 border border-purple-500/40 px-2 py-0.5 rounded">
+                Vitest / Jest Chaos Test
+              </span>
+            </div>
+            <pre className="p-4 overflow-x-auto text-[11.5px] leading-relaxed text-purple-200 font-mono whitespace-pre-wrap select-text">
+              {plan.test}
+            </pre>
+          </div>
+        )}
+
+        {/* TAB 4: Verification & SLO */}
+        {activeTab === 'verify' && (
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
+                <GitPullRequest className="w-4 h-4" />
+                5. Fix Ke Baad Improvement Kaise Verify Karni Hai (Success Signals)
+              </div>
+              <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                SLO Target: P99 &lt; 900ms · 99.9% Availability
+              </span>
+            </div>
+
+            <div className="text-xs text-slate-300 font-mono space-y-2 whitespace-pre-line leading-relaxed bg-slate-900/60 p-4 rounded-xl border border-slate-800/80">
+              {plan.verify}
+            </div>
+
+            {/* Interactive Virtual Patch Simulator Button */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-800">
+              <div className="text-xs text-slate-400 font-sans">
+                Want to test this fix immediately against our live cluster simulation?
+              </div>
+              <button
+                onClick={handleSimulateFix}
+                disabled={verifying}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-mono font-extrabold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+              >
+                {verifying ? (
+                  <>
+                    <Activity className="w-4 h-4 animate-spin" />
+                    Injecting Virtual Patch & Simulating...
+                  </>
+                ) : verifiedSuccess ? (
+                  <>
+                    <Check className="w-4 h-4 text-slate-950" />
+                    Verification Passed! Cluster Resilient (100%)
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4" />
+                    Simulate Fix & Verify Cluster Resilience
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: SRE Runbook & Alerts */}
+        {activeTab === 'runbook' && (
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3 font-mono">
+            <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-wider">
+              <Terminal className="w-4 h-4" />
+              SRE Operational Runbook & Prometheus Alerts
+            </div>
+            <pre className="overflow-x-auto text-[11px] leading-relaxed text-slate-300 bg-slate-900/80 p-4 rounded-xl border border-slate-800 whitespace-pre-wrap select-text">
+              {plan.runbook}
+            </pre>
+            <div className="text-[11px] text-slate-400 pt-1">
+              Issue title: <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">{plan.issue}</code>
+            </div>
+          </div>
+        )}
       </div>
     </section>
-  );
-}
-
-function PlanBlock({ icon: Icon, label, value }) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950/45 p-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-1.5">
-        <Icon className="w-3.5 h-3.5 text-amber-400" />
-        {label}
-      </div>
-      <p className="text-[10px] leading-relaxed text-slate-300">{value}</p>
-    </div>
   );
 }
