@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { FileText, Copy, Check, Download, X, ShieldAlert, Award, Clock, ArrowRight } from 'lucide-react';
+import { getEngineeringPlan } from './EngineeringActionPlan';
 
-export function generatePostMortemContent({ nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios = [] }) {
+export function generatePostMortemContent({ nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios = [], scenarioId }) {
   const dateStr = new Date().toISOString();
   const leader = nodes.find((n) => n.role === 'LEADER' && n.status === 'ONLINE');
   const onlineCount = nodes.filter((n) => n.status === 'ONLINE').length;
   const avgMttr = mttrHistory.length > 0 
     ? Math.round(mttrHistory.reduce((a, b) => a + b, 0) / mttrHistory.length) 
     : 850;
+  const engineeringPlan = getEngineeringPlan(scenarioId);
 
   return `# INCIDENT REHEARSAL REPORT
 **Service Name:** ChaosWhisper Distributed Systems Simulation
@@ -49,17 +51,33 @@ ${logs.slice(-10).map((l) => `| ${l.time} | \`${l.type}\` | ${l.message} |`).joi
 2. **Network Partition Resiliency:** Pre-configure witness nodes or lease-read mechanisms to minimize stale read probabilities during minority isolation.
 3. **Automated Rollback:** Enforce automated traffic throttling when P99 RPC latency spikes above $250ms$ during DDoS storms.
 
+## 5. Engineering Follow-up
+**Problem:** ${engineeringPlan.problem}
+
+**Recommended change:** ${engineeringPlan.change}
+
+**Verification test:** ${engineeringPlan.test}
+
+**Success signal:** ${engineeringPlan.verify}
+
+### Implementation sketch
+\`\`\`js
+${engineeringPlan.code}
+\`\`\`
+
+**Suggested issue:** ${engineeringPlan.issue}
+
 ---
 *Report compiled by ChaosWhisper from simulated state and event history.*
 `;
 }
 
-export default function PostMortemModal({ isOpen, onClose, nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios = [] }) {
+export default function PostMortemModal({ isOpen, onClose, nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios = [], scenarioId }) {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
-  const markdownContent = generatePostMortemContent({ nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios });
+  const markdownContent = generatePostMortemContent({ nodes, term, logs, mttrHistory, resiliencyScore, completedScenarios, scenarioId });
 
   const handleCopy = () => {
     navigator.clipboard.writeText(markdownContent);

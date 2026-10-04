@@ -6,6 +6,7 @@ import EventLog from './components/EventLog';
 import PostMortemModal from './components/PostMortemModal';
 import RealWorldProbe from './components/RealWorldProbe';
 import ReadinessBoard from './components/ReadinessBoard';
+import EngineeringActionPlan from './components/EngineeringActionPlan';
 import { soundFX } from './utils/audioEffects';
 import { aiVoice } from './utils/aiVoice';
 import { Cpu, Mic, RefreshCw, FileText, Globe, Layers, Flame, DollarSign } from 'lucide-react';
@@ -58,6 +59,7 @@ export default function App() {
   const [totalDowntimeLoss, setTotalDowntimeLoss] = useState(0);
   const [activeScenario, setActiveScenario] = useState(null);
   const [completedScenarios, setCompletedScenarios] = useState([]);
+  const [lastScenarioId, setLastScenarioId] = useState(null);
 
   const [logs, setLogs] = useState([
     { id: 1, time: '12:00:01', type: 'HEARTBEAT', message: 'Incident rehearsal initialized: simulated e-commerce service mesh operational.' },
@@ -99,6 +101,7 @@ export default function App() {
   const runReadinessScenario = useCallback((scenario) => {
     if (activeScenarioRef.current) return;
     setActiveScenario(scenario.id);
+    setLastScenarioId(scenario.id);
     addLog('CHAOS', `READINESS DRILL: ${scenario.label} started. Objective: ${scenario.objective}`);
     executeActionRef.current?.(scenario.action.type, scenario.action.payload, scenario.action.voice);
   }, [addLog]);
@@ -663,6 +666,11 @@ export default function App() {
           onHeal={completeReadinessScenario}
         />
 
+        <EngineeringActionPlan
+          scenarioId={activeScenario || lastScenarioId}
+          hasEvidence={completedScenarios.length > 0}
+        />
+
         {/* Dynamic Mission Status & Glassmorphism Metrics with Resiliency Score */}
         <MetricsPanel
           term={term}
@@ -733,6 +741,7 @@ export default function App() {
         mttrHistory={mttrHistory}
         resiliencyScore={resiliencyScore}
         completedScenarios={completedScenarios}
+        scenarioId={lastScenarioId}
       />
 
       {/* Footer */}

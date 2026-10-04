@@ -45,6 +45,17 @@ The loss counter is an illustrative scenario estimate, not a production finance 
 * Complete a drill only after restoring the simulation, then carry the evidence into the exported report.
 * This turns a flashy incident demo into a repeatable practice loop for onboarding, game days, and reliability reviews.
 
+### 7. 🧰 Engineering Action Plans
+Every rehearsal produces a practical follow-up instead of stopping at visualization:
+
+* **Problem:** what behavior was exposed by the failure.
+* **Why it happened:** the dependency or safety mechanism that needs attention.
+* **Code/config change:** a bounded implementation direction and code sketch.
+* **Test to write:** the failure-injection or integration test an engineer should add.
+* **Verify improvement:** the measurable signal that proves the fix worked.
+
+The brief can be copied or downloaded as Markdown, and the same follow-up is included in the incident rehearsal report.
+
 ## 🚀 Product Direction
 
 ChaosWhisper is intentionally a safe browser prototype today. A practical future product could serve engineering teams with:
