@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Zap, ShieldCheck, Clock, Radio, Volume2, AlertCircle, Crosshair, Crown, Flame, Bot, Send, Gauge, FileText, Globe, Layers, Server, DollarSign } from 'lucide-react';
+import { Mic, MicOff, Radio, AlertCircle, Send } from 'lucide-react';
 import { parseVoiceCommand } from '../utils/voiceParser';
 import { soundFX } from '../utils/audioEffects';
 import { aiVoice } from '../utils/aiVoice';
@@ -7,17 +7,7 @@ import { aiVoice } from '../utils/aiVoice';
 export default function ControlDeck({
   onExecuteAction,
   lastVoiceCmd,
-  isMuted,
-  setIsMuted,
-  nodes,
-  activeLeaderId,
-  latency,
   onOpenReport,
-  onToggleProbe,
-  showProbe,
-  activeTopology = 'MICROSERVICES',
-  microservices = [],
-  cloudRegions = []
 }) {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -306,75 +296,6 @@ export default function ControlDeck({
           </div>
         </div>
 
-        {/* AI voice, speed control, and rehearsal actions */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* User Requested Speed Presets: 1x, 1.5x, 2.5x */}
-          <div className="flex items-center bg-slate-950/80 border border-slate-700/80 rounded-xl px-2.5 py-1.5 gap-1.5 shadow-inner" title="Calibrate AI speaking speed (1x, 1.5x, 2.5x)">
-            <Gauge className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <span className="text-[10px] font-mono text-slate-400 font-bold uppercase">Speed:</span>
-            {[
-              { label: '1x Normal', val: 1.0 },
-              { label: '1.5x Fast', val: 1.5 },
-              { label: '2.5x Turbo', val: 2.5 }
-            ].map((preset) => (
-              <button
-                key={preset.val}
-                onClick={() => handleSpeedChange(preset.val)}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer ${
-                  voiceSpeed === preset.val
-                    ? 'bg-purple-600 text-white shadow-[0_0_12px_rgba(168,85,247,0.6)] ring-1 ring-purple-300'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                }`}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => {
-              const next = !voiceAssistantEnabled;
-              setVoiceAssistantEnabled(next);
-              aiVoice.toggle(next);
-            }}
-            className={`px-3 py-2 rounded-xl border text-xs font-mono font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              voiceAssistantEnabled
-                ? 'bg-purple-950/60 border-purple-500/60 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                : 'bg-slate-800/80 border-slate-700 text-slate-500'
-            }`}
-            title="Toggle AI voice speaking responses back to you"
-          >
-            <Bot className="w-4 h-4 text-purple-400" />
-            {voiceAssistantEnabled ? 'AI VOICE: ON' : 'AI VOICE: MUTED'}
-          </button>
-
-          {/* Read-only HTTP probe toggle */}
-          <button
-            onClick={onToggleProbe}
-            className={`px-3 py-2 rounded-xl border text-xs font-mono font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              showProbe
-                ? 'bg-cyan-950/80 border-cyan-500 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200'
-            }`}
-            title="Toggle the read-only HTTP resilience probe"
-          >
-            <Globe className="w-4 h-4 text-cyan-400" />
-            {showProbe ? 'HIDE PROBE' : 'HTTP PROBE'}
-          </button>
-
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className={`p-2.5 rounded-xl border text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer ${
-              isMuted
-                ? 'bg-slate-800 border-slate-700 text-slate-500'
-                : 'bg-cyan-950/60 border-cyan-800/80 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-            }`}
-            title="Toggle Web Audio sound effects"
-          >
-            <Volume2 className="w-4 h-4" />
-            {isMuted ? 'FX OFF' : 'FX ON'}
-          </button>
-        </div>
       </div>
 
       {/* Mic Permission Warning */}
@@ -397,159 +318,6 @@ export default function ControlDeck({
           </span>
         </div>
       )}
-
-      {/* Dynamic Target Component Strike Row (Adapts to Active Topology) */}
-      <div className="mt-5 rounded-2xl border border-rose-900/40 bg-slate-950/70 p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-rose-300">
-              <Crosshair className="h-4 w-4 text-rose-400" />
-              Target Architecture Component ({activeTopology})
-            </div>
-            <p className="mt-1 text-[11px] text-slate-400 font-mono">
-              Speak or click any component to inject failure:
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {/* View 1: Microservices */}
-            {activeTopology === 'MICROSERVICES' &&
-              microservices.map((svc) => (
-                <button
-                  key={svc.id}
-                  onClick={() => {
-                    soundFX.playClick();
-                    if (voiceAssistantEnabled) aiVoice.speak(`Service ${svc.name} offline.`);
-                    onExecuteAction('CRASH_SERVICE', svc.id, `Crash ${svc.name}`);
-                  }}
-                  disabled={svc.status === 'OFFLINE'}
-                  className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-mono font-bold transition-all active:scale-95 cursor-pointer ${
-                    svc.status === 'OFFLINE'
-                      ? 'cursor-not-allowed border-slate-800 bg-slate-900 text-slate-600 opacity-50'
-                      : 'border-rose-800/60 bg-rose-950/40 text-rose-200 hover:border-rose-400 hover:bg-rose-900/60 shadow-lg shadow-rose-950/40'
-                  }`}
-                >
-                  {svc.name}
-                </button>
-              ))}
-
-            {/* View 2: AWS Global Regions */}
-            {activeTopology === 'GLOBAL_CLOUD' &&
-              cloudRegions.map((reg) => (
-                <button
-                  key={reg.id}
-                  onClick={() => {
-                    soundFX.playClick();
-                    if (voiceAssistantEnabled) aiVoice.speak(`Region ${reg.name} blackout.`);
-                    onExecuteAction('CRASH_REGION', reg.id, `Blackout ${reg.name}`);
-                  }}
-                  disabled={reg.status === 'OFFLINE'}
-                  className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-mono font-bold transition-all active:scale-95 cursor-pointer ${
-                    reg.status === 'OFFLINE'
-                      ? 'cursor-not-allowed border-slate-800 bg-slate-900 text-slate-600 opacity-50'
-                      : 'border-rose-800/60 bg-rose-950/40 text-rose-200 hover:border-rose-400 hover:bg-rose-900/60 shadow-lg shadow-rose-950/40'
-                  }`}
-                >
-                  {reg.id}
-                </button>
-              ))}
-
-            {/* View 3: Raft Servers */}
-            {activeTopology === 'RAFT_CLUSTER' &&
-              (nodes || []).map((node) => (
-                <button
-                  key={node.id}
-                  onClick={() => {
-                    soundFX.playClick();
-                    if (voiceAssistantEnabled) aiVoice.speak(`Server ${node.id} offline.`);
-                    onExecuteAction('CRASH_NODE', node.id, `Crash Server ${node.id}`);
-                  }}
-                  disabled={node.status === 'OFFLINE'}
-                  className={`relative flex min-w-[76px] items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-mono font-bold transition-all active:scale-95 cursor-pointer ${
-                    node.status === 'OFFLINE'
-                      ? 'cursor-not-allowed border-slate-800 bg-slate-900 text-slate-600 opacity-50'
-                      : 'border-rose-800/60 bg-rose-950/40 text-rose-200 hover:border-rose-400 hover:bg-rose-900/60 shadow-lg shadow-rose-950/40'
-                  }`}
-                >
-                  {activeLeaderId === node.id && <Crown className="h-3.5 w-3.5 text-emerald-400" />}
-                  SERVER-{node.id}
-                </button>
-              ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Failure rehearsal scenarios */}
-      <div className="pt-5">
-        <div className="text-xs font-mono uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-bold">
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
-            Failure Rehearsal Scenarios
-          </span>
-          <span className="text-slate-500 text-[10px]">Recommended flow: drill → report → heal</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <button
-            onClick={() => {
-              soundFX.playClick();
-              if (voiceAssistantEnabled) aiVoice.speak('Payment Gateway offline. Downstream checkout degraded.');
-              onExecuteAction('CRASH_SERVICE', 'payments', 'Kill Payment Gateway');
-            }}
-            className="flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-rose-950/50 border border-rose-800/70 text-rose-200 hover:bg-rose-900/60 hover:border-rose-400 transition-all text-xs font-mono font-bold active:scale-95 cursor-pointer shadow-lg shadow-rose-950/40"
-          >
-            <Zap className="w-4 h-4 text-rose-400" />
-            Kill Payments
-          </button>
-
-          <button
-            onClick={() => {
-              soundFX.playClick();
-              if (voiceAssistantEnabled) aiVoice.speak('AWS US-East 1 blackout. Global Route 53 failing over.');
-              onExecuteAction('CRASH_REGION', 'us-east-1', 'Blackout US-East-1');
-            }}
-            className="flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-orange-950/50 border border-orange-700/60 text-orange-200 hover:bg-orange-900/60 hover:border-orange-400 transition-all text-xs font-mono font-bold active:scale-95 cursor-pointer shadow-lg shadow-orange-950/40"
-          >
-            <Globe className="w-4 h-4 text-orange-400" />
-            Blackout US-East
-          </button>
-
-          <button
-            onClick={() => {
-              soundFX.playClick();
-              if (voiceAssistantEnabled) aiVoice.speak('Circuit breaker tripped. Fallback responses active.');
-              onExecuteAction('TRIP_BREAKER', null, 'Trip Circuit Breakers');
-            }}
-            className="flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-amber-950/50 border border-amber-700/60 text-amber-200 hover:bg-amber-900/60 hover:border-amber-400 transition-all text-xs font-mono font-bold active:scale-95 cursor-pointer shadow-lg shadow-amber-950/40"
-          >
-            <ShieldCheck className="w-4 h-4 text-amber-400" />
-            Trip Breakers
-          </button>
-
-          <button
-            onClick={() => {
-              soundFX.playClick();
-              onExecuteAction('RUN_BLACK_FRIDAY', null, 'Black Friday 150k RPS Drill');
-            }}
-            className="flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-red-950/60 border border-red-600/70 text-red-200 hover:bg-red-900/70 hover:border-red-400 transition-all text-xs font-mono font-bold active:scale-95 cursor-pointer shadow-lg shadow-red-950/50"
-          >
-            <Flame className="w-4 h-4 text-red-400 animate-pulse" />
-            Black Friday Drill
-          </button>
-
-          <button
-            onClick={() => {
-              soundFX.playClick();
-              if (voiceAssistantEnabled) aiVoice.speak('Cluster restored. All services and nodes online.');
-              onExecuteAction('HEAL_ALL', null, 'Heal Cluster');
-            }}
-            className="col-span-2 sm:col-span-1 flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/70 text-emerald-200 hover:bg-emerald-900/70 hover:border-emerald-400 transition-all text-xs font-mono font-bold active:scale-95 cursor-pointer shadow-lg shadow-emerald-950/40"
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            Heal All
-          </button>
-        </div>
-      </div>
 
       {/* Text command fallback */}
       <form onSubmit={handleManualSubmit} className="mt-5 flex gap-2 pt-4 border-t border-slate-800/80">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, AlertTriangle, ShieldAlert, Cpu, Zap, Activity, Globe, Server, Database, Layers, Radio, Shield, DollarSign, Flame } from 'lucide-react';
+import { Crown, AlertTriangle, ShieldAlert, Cpu, Zap, Globe, Server, Database, Layers, Radio, Shield, DollarSign, Flame } from 'lucide-react';
 
 export default function ClusterCanvas({
   nodes,
@@ -417,14 +417,6 @@ export default function ClusterCanvas({
           })}
       </div>
 
-      {/* Bottom Hint Banner */}
-      <div className="relative z-10 flex items-center justify-between text-[11px] font-mono text-slate-400 border-t border-slate-800/80 pt-2 px-1">
-        <span className="flex items-center gap-1.5">
-          <Activity className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-          Click any component or speak: <strong className="text-cyan-300">"Kill Payment Gateway"</strong>, <strong className="text-cyan-300">"Blackout US East"</strong>, <strong className="text-cyan-300">"Trip Circuit Breaker"</strong>
-        </span>
-        <span className="text-[10px] text-slate-500">Autonomous Chaos Engine active</span>
-      </div>
     </div>
   );
 }

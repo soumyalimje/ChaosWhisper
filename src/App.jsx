@@ -4,12 +4,11 @@ import ControlDeck from './components/ControlDeck';
 import MetricsPanel from './components/MetricsPanel';
 import EventLog from './components/EventLog';
 import PostMortemModal from './components/PostMortemModal';
-import RealWorldProbe from './components/RealWorldProbe';
 import ReadinessBoard from './components/ReadinessBoard';
 import EngineeringActionPlan from './components/EngineeringActionPlan';
 import { soundFX } from './utils/audioEffects';
 import { aiVoice } from './utils/aiVoice';
-import { Cpu, Mic, RefreshCw, FileText, Globe, Layers, Flame, DollarSign } from 'lucide-react';
+import { Cpu, RefreshCw, FileText } from 'lucide-react';
 
 const INITIAL_NODES = [
   { id: 1, role: 'LEADER', status: 'ONLINE', term: 1, logsCount: 28 },
@@ -54,7 +53,6 @@ export default function App() {
   const [lastVoiceCmd, setLastVoiceCmd] = useState('');
   const [screenAlert, setScreenAlert] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showRealWorldProbe, setShowRealWorldProbe] = useState(false);
   const [mttrHistory, setMttrHistory] = useState([850, 920, 780]);
   const [totalDowntimeLoss, setTotalDowntimeLoss] = useState(0);
   const [activeScenario, setActiveScenario] = useState(null);
@@ -610,17 +608,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Black Friday Drill Quick Action */}
-            <button
-              onClick={() => handleExecuteAction('RUN_BLACK_FRIDAY', null, 'Black Friday Mega Drill')}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-950/60 border border-red-500/50 text-red-300 hover:bg-red-900/60 text-xs font-mono font-bold transition-all cursor-pointer shadow-lg shadow-red-950/40"
-              title="Simulate 150k RPS Black Friday Peak Outage Drill"
-            >
-              <Flame className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-              <span>Black Friday Drill</span>
-            </button>
-
-            {/* SRE Incident Post-Mortem Quick Button */}
+            {/* Report and reset are the two global actions. */}
             <button
               onClick={() => setShowReportModal(true)}
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-purple-300 hover:bg-purple-900/60 text-xs font-mono font-bold transition-all cursor-pointer shadow-lg shadow-purple-950/30"
@@ -629,16 +617,6 @@ export default function App() {
               <FileText className="w-3.5 h-3.5 text-purple-400" />
               <span>Incident Report</span>
             </button>
-
-            {/* Wispr Flow Live Indicator */}
-            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-cyan-500/40 text-xs text-slate-200 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-              <Mic className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Built with <strong>Wispr Flow</strong></span>
-            </div>
 
             <button
               onClick={() => handleExecuteAction('HEAL_ALL', null, 'Reset All')}
@@ -684,11 +662,6 @@ export default function App() {
           onOpenReport={() => setShowReportModal(true)}
         />
 
-        {/* Read-only HTTP probe panel (when toggled) */}
-        {showRealWorldProbe && (
-          <RealWorldProbe onLogEvent={addLog} />
-        )}
-
         {/* Center Grid: Cluster Canvas (Left) + Live Event Log (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2">
@@ -726,8 +699,6 @@ export default function App() {
           activeLeaderId={activeLeaderId}
           latency={latency}
           onOpenReport={() => setShowReportModal(true)}
-          onToggleProbe={() => setShowRealWorldProbe((prev) => !prev)}
-          showProbe={showRealWorldProbe}
         />
       </main>
 
