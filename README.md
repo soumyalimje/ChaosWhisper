@@ -72,17 +72,6 @@ Every failure triggers concrete engineering guidance instead of mere animation:
 | *"What is our financial loss?"* | Reads illustrative scenario exposure | Downtime cost accumulator |
 | *"Heal cluster"* / *"Restore all"* | Restores modeled components | Recovery and clean operational state |
 
-## ✅ Wispr Flow Submission Checklist
-
-This project is designed for the Wispr Flow Shortlisting Task. Before submitting, verify each item yourself:
-
-- Create or confirm your Wispr Flow account using the required referral link: [ref.wisprflow.ai/hhg](https://ref.wisprflow.ai/hhg).
-- Record the actual development process with Wispr Flow and your voice visible in the video. A final-app walkthrough alone is not enough.
-- Show at least one voice-driven code change, the running app, and a voice command controlling the simulation.
-- Submit this GitHub repository: [github.com/soumyalimje/ChaosWhisper](https://github.com/soumyalimje/ChaosWhisper).
-- Submit the demo video and repository through the official [submission form](https://forms.gle/Lv9wF8gYVHdEqfJW8).
-- Do not submit until the video, repository, and referral-account requirement are all confirmed; the task allows no resubmissions.
-
 ---
 
 ## 🛠️ Tech Stack
