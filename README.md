@@ -83,15 +83,26 @@ This project is designed for the Wispr Flow Shortlisting Task. Before submitting
 - Submit the demo video and repository through the official [submission form](https://forms.gle/Lv9wF8gYVHdEqfJW8).
 - Do not submit until the video, repository, and referral-account requirement are all confirmed; the task allows no resubmissions.
 
-### Suggested 90-Second Demo Recording
+### Recommended 90-Second Recording Script
 
-1. **0:00-0:20:** Show Wispr Flow and use your voice to make a small code or copy change; run the app.
-2. **0:20-0:50:** Say “Kill Payment Gateway,” show the dependency failure, circuit breaker, metrics, and event log.
-3. **0:50-1:05:** Say “What is our blast radius?” or “What is our financial loss?” and show the spoken response.
-4. **1:05-1:20:** Open **Incident Report** and show the generated simulation evidence.
-5. **1:20-1:30:** Say “Heal cluster” and finish on the recovered state.
+Make the recording tell one complete story: **voice-built change → injected failure → engineering diagnosis → verified recovery**. Keep the browser and Wispr Flow visible when possible. Use the microphone in the **Control Deck** for the live commands; the text command field is only a backup if browser speech recognition is unavailable.
 
-Keep the text command field visible as a backup, but make the voice-driven build process the centerpiece of the recording.
+| Time | Say this | Show this |
+| :--- | :--- | :--- |
+| **0:00-0:15** | “Add a short description that this is a safe simulation lab for practicing distributed-systems failure response.” | Wispr Flow entering the code or copy change, then the running ChaosWhisper app. This proves the project was edited hands-free instead of presenting only a finished screen. |
+| **0:15-0:25** | “Payment drill.” | The command appearing in the live transcript, the payment dependency going offline, circuit breakers changing state, the event log, and the degraded resiliency metrics. |
+| **0:25-0:38** | “What is our blast radius?” | The spoken impact response and the cockpit metrics. Briefly point out that the revenue-at-risk number is illustrative simulation evidence. |
+| **0:38-0:55** | “Open the remediation studio.” | Click the **Remediation Studio** tab. Show the detected problem, root cause, production code patch, automated failure test, and verification signals. |
+| **0:55-1:08** | “Simulate fix.” | The **Simulate Fix & Verify** action, the recovery animation, and the success/SLO verification state. This is the engineering payoff of the drill. |
+| **1:08-1:20** | “Export report.” | The **Incident Report** modal with the Markdown rehearsal evidence, timeline, quorum state, MTTR, and follow-up recommendations. |
+| **1:20-1:30** | “Heal cluster.” | The cluster returning to a clean operational state, all services/nodes online, and the final recovery event in the log. |
+
+#### Voice Recording Notes
+
+- Start with **“Payment drill”** rather than “Kill Payment Gateway”; it runs the named readiness rehearsal and produces the clearest remediation evidence.
+- Pause briefly after each command so the transcript, animation, and spoken response are visible before moving on.
+- If speech recognition is unavailable, type the same commands into the text command field. The product behavior is identical, but keep Wispr Flow visible for the voice-driven editing proof.
+- If the app opens on the cockpit, use the existing buttons to move between **Incident Cockpit**, **Remediation Studio**, and **Incident Report**. No infrastructure or real customer traffic is involved.
 
 ---
 
