@@ -97,7 +97,7 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal, usually `http://localhost:5173`. Chrome, Edge, and Brave support the optional Web Speech API; the text command field always works as a fallback.
+Open `http://localhost:3000`. The Vite server is configured to use port `3000`. Chrome, Edge, and Brave support the optional Web Speech API; the text command field always works as a fallback.
 
 ---
 
