@@ -32,28 +32,26 @@ export function toMarkdown(plan) {
   return `# INCIDENT REMEDIATION & SRE RUNBOOK: ${plan.title}
 **Category:** ${plan.category} | **Severity:** ${plan.severity} | **Value Protected:** ${plan.roi}
 
----
 
-## 1. Problem Statement (Problem Kya Hai)
+  ## 1. WHAT IS BROKEN
 ${plan.problem}
 
-## 2. Root Cause Analysis (Problem Kyun Hui)
+  ## 2. ROOT CAUSE ANALYSIS
 ${plan.why}
 
-## 3. Recommended Code / Config Change (Code Mein Kya Change Karna Chahiye)
+  ## 3. PRODUCTION CODE CHANGE
 \`\`\`${plan.codeLang || 'typescript'}
 ${plan.code}
 \`\`\`
 
-## 4. Automated Chaos / Unit Test (Kaunsa Test Likhna Chahiye)
+  ## 4. AUTOMATED FAILURE INJECTION
 \`\`\`typescript
 ${plan.test}
 \`\`\`
 
-## 5. Improvement Verification & Production Signals (Fix Ke Baad Kaise Verify Karein)
+  ## 5. VERIFICATION & PRODUCTION SIGNALS
 ${plan.verify}
 
----
 
 ${plan.runbook}
 
@@ -243,7 +241,7 @@ export default function EngineeringActionPlan({
             <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
               <div className="flex items-center gap-2 text-rose-400 font-mono text-xs font-bold uppercase tracking-wider">
                 <Target className="w-4 h-4" />
-                1. Problem Kya Hai (What is Broken)
+                1. WHAT IS BROKEN
               </div>
               <p className="text-xs text-slate-200 leading-relaxed font-sans font-medium">
                 {plan.problem}
@@ -257,7 +255,7 @@ export default function EngineeringActionPlan({
             <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
               <div className="flex items-center gap-2 text-amber-400 font-mono text-xs font-bold uppercase tracking-wider">
                 <ShieldAlert className="w-4 h-4" />
-                2. Problem Kyun Hui (Root Cause Analysis)
+                2. ROOT CAUSE ANALYSIS
               </div>
               <p className="text-xs text-slate-300 leading-relaxed font-sans">
                 {plan.why}
@@ -275,7 +273,7 @@ export default function EngineeringActionPlan({
             <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono">
               <div className="flex items-center gap-2 text-cyan-300 font-bold">
                 <Code2 className="w-4 h-4 text-cyan-400" />
-                <span>3. Code Mein Kya Change Karna Chahiye: {plan.title}</span>
+                <span>3. PRODUCTION CODE CHANGE: {plan.title}</span>
               </div>
               <span className="text-[10px] text-slate-400 uppercase bg-slate-800 px-2 py-0.5 rounded">
                 TypeScript / Node.js
@@ -297,7 +295,7 @@ export default function EngineeringActionPlan({
             <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono">
               <div className="flex items-center gap-2 text-purple-300 font-bold">
                 <ListChecks className="w-4 h-4 text-purple-400" />
-                <span>4. Kaunsa Test Likhna Chahiye (Automated Failure Injection)</span>
+                <span>4. AUTOMATED FAILURE INJECTION</span>
               </div>
               <span className="text-[10px] text-purple-300 uppercase bg-purple-950/60 border border-purple-500/40 px-2 py-0.5 rounded">
                 Vitest / Jest Chaos Test
@@ -315,7 +313,7 @@ export default function EngineeringActionPlan({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
                 <GitPullRequest className="w-4 h-4" />
-                5. Fix Ke Baad Improvement Kaise Verify Karni Hai (Success Signals)
+                5. VERIFICATION & PRODUCTION SIGNALS
               </div>
               <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold">
                 SLO Target: P99 &lt; 900ms · 99.9% Availability

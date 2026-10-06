@@ -18,7 +18,6 @@ export function generatePostMortemContent({ nodes, term, logs, mttrHistory, resi
 **Evidence Scope:** Browser simulation state and generated event log; not a production incident record or compliance certification
 **Heuristic Resilience Score:** ${resiliencyScore}% (${resiliencyScore >= 90 ? 'nominal' : resiliencyScore >= 75 ? 'degraded' : 'quorum risk'})
 
----
 
 ## 1. Executive Summary
 During this rehearsal, the browser simulation was subjected to voice- or text-triggered failure scenarios targeting consensus leaders, network partitions, and synthetic traffic floods. The Raft-inspired five-node model detected heartbeat failure and simulated an autonomous failover.
@@ -29,7 +28,6 @@ During this rehearsal, the browser simulation was subjected to voice- or text-tr
 * **Average Mean Time to Recovery (MTTR):** ${avgMttr}ms (measured within this rehearsal)
 * **Readiness Scenarios Completed:** ${completedScenarios.length}/3
 
----
 
 ## 2. Blast Radius & Quorum Analysis
 * **Consensus Quorum Tolerance:** $\\lfloor 5 / 2 \\rfloor + 1 = 3$ nodes required for authoritative commits.
@@ -37,14 +35,12 @@ During this rehearsal, the browser simulation was subjected to voice- or text-tr
 * **Current Fault Tolerance Margin:** ${Math.max(0, onlineCount - 3)} node(s) before quorum collapse.
 * **Split-Brain Mitigation:** Monotonically increasing epoch terms model prevention of dual-leader partitioning.
 
----
 
 ## 3. Timestamped Incident Timeline
 | Timestamp | Event Type | Description |
 | :--- | :--- | :--- |
 ${logs.slice(-10).map((l) => `| ${l.time} | \`${l.type}\` | ${l.message} |`).join('\n')}
 
----
 
 ## 4. Architectural Hardening & SRE Recommendations
 1. **Heartbeat Tuning:** Maintain heartbeat broadcast pulse between 150ms - 300ms to preserve election timeout boundaries ($2400ms$).
@@ -52,26 +48,25 @@ ${logs.slice(-10).map((l) => `| ${l.time} | \`${l.type}\` | ${l.message} |`).joi
 3. **Automated Rollback:** Enforce automated traffic throttling when P99 RPC latency spikes above $250ms$ during DDoS storms.
 
 ## 5. Concrete Engineering Remediation Plan (5 Core Pillars)
-### 1. Problem Kya Hai (Observed Failure)
+  ### 1. WHAT IS BROKEN
 ${engineeringPlan.problem}
 
-### 2. Problem Kyun Hui (Root Cause Analysis)
+  ### 2. ROOT CAUSE ANALYSIS
 ${engineeringPlan.why}
 
-### 3. Code Mein Kya Change Karna Chahiye (Production Patch)
+  ### 3. PRODUCTION CODE CHANGE
 \`\`\`${engineeringPlan.codeLang || 'typescript'}
 ${engineeringPlan.code}
 \`\`\`
 
-### 4. Kaunsa Test Likhna Chahiye (Failure Injection Test)
+  ### 4. AUTOMATED FAILURE INJECTION
 \`\`\`typescript
 ${engineeringPlan.test}
 \`\`\`
 
-### 5. Fix Ke Baad Improvement Kaise Verify Karni Hai (SLO & Signals)
+  ### 5. VERIFICATION & PRODUCTION SIGNALS
 ${engineeringPlan.verify}
 
----
 
 ## 6. SRE Operational Runbook & Alert Configuration
 ${engineeringPlan.runbook}
@@ -79,7 +74,6 @@ ${engineeringPlan.runbook}
 **Estimated Business Value Protected:** ${engineeringPlan.roi || 'High Availability'}
 **Suggested GitHub/Jira Issue:** \`${engineeringPlan.issue}\`
 
----
 *Report compiled by ChaosWhisper from simulated state and event history.*
 
 `;
