@@ -118,6 +118,8 @@ export default function App() {
   if (offlineServices.some((s) => s.id === 'database')) financialLossPerMin += 24000;
   if (offlineServices.some((s) => s.id === 'gateway')) financialLossPerMin += 32000;
   if (offlineServices.some((s) => s.id === 'auth')) financialLossPerMin += 14000;
+  if (offlineServices.some((s) => s.id === 'even buzz')) financialLossPerMin += 9000;
+  if (offlineServices.some((s) => s.id === 'catch')) financialLossPerMin += 7500;
   const offlineRegions = cloudRegions.filter((r) => r.status === 'OFFLINE');
   financialLossPerMin += offlineRegions.length * 12500;
   const offlineRaft = nodes.filter((n) => n.status === 'OFFLINE');
