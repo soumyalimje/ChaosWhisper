@@ -11,6 +11,7 @@
 
 ## 📖 Overview
 **ChaosWhisper** is a browser-based SRE training lab. Speak or type a failure scenario, watch a distributed-systems simulation respond, inspect the blast radius, and export a rehearsal report.
+The demo runs locally at `http://localhost:3000` and uses voice input as an optional control layer.
 
 It is deliberately safe: the cockpit does not connect to or modify cloud infrastructure. Its purpose is to make incident response mechanics tangible before a team has to face them in production.
 
