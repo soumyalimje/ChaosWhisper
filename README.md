@@ -1,105 +1,151 @@
-# ChaosWhisper ⚡
-### Voice-Controlled Incident Rehearsal Simulator for Distributed Systems
+# ChaosWhisper
 
-> **Built hands-free using Wispr Flow** for the Wispr Flow Shortlisting Task.
+### A future-ready reliability lab for productive, profitable engineering
 
-![Architecture](https://img.shields.io/badge/Architecture-Microservices_|_Multi--Region_|_Raft-emerald?style=for-the-badge)
-![Voice Tool](https://img.shields.io/badge/Voice_Tool-Wispr_Flow-cyan?style=for-the-badge)
-![Stack](https://img.shields.io/badge/Stack-React_|_Web_Audio_|_SVG_Mesh_|_Tailwind-blue?style=for-the-badge)
+ChaosWhisper turns distributed-systems failure practice into a repeatable engineering advantage. Trigger controlled failures in a microservice mesh, AWS-style multi-region topology, or five-node Raft-inspired cluster; watch the modeled blast radius change; apply remediation guidance; and export evidence from the rehearsal.
 
----
+It helps teams spend less time guessing during incidents and more time making prepared, measurable decisions. The result is a tighter path from failure signal to fix: practise faster, recover with more confidence, reduce avoidable downtime risk, and build reliability knowledge that compounds across the team.
 
-## 📖 Overview
-**ChaosWhisper** is a browser-based SRE training lab for practising incident response in a controlled, repeatable environment. Engineers can speak or type a failure scenario, then observe how simulated microservices, regions, or Raft-inspired nodes react through dependency failures, circuit breakers, elections, partitions, quorum changes, and recovery. The cockpit makes the resulting blast radius, degraded dependencies, recovery progress, and illustrative business exposure visible, while readiness drills and exported rehearsal reports turn each exercise into evidence for review, onboarding, and game days.
+The simulation is intentionally non-production. It does not connect to, mutate, or deploy changes to cloud infrastructure. Business-impact numbers are illustrative estimates, not financial reporting.
 
-The demo runs locally at `http://localhost:3000` and uses voice input as an optional control layer; typed commands are always available as a fallback. It is deliberately safe and non-production: the simulation uses modeled state and illustrative metrics, and the cockpit does not connect to, mutate, or deploy changes to cloud infrastructure. Its purpose is to make incident-response mechanics tangible and help teams rehearse decisions before a real outage occurs.
+## Why It Matters to Engineers
 
----
+ChaosWhisper gives engineers a repeatable place to practise the work that is hardest to simulate during a calm day:
 
-## 🌟 What Makes This Useful
+- **Build incident fluency:** Rehearse failure detection, blast-radius assessment, communication, and recovery without waiting for a real outage.
+- **Test resilience decisions:** See how timeouts, circuit breakers, cache failures, regional failover, leader elections, partitions, and quorum loss affect dependent systems.
+- **Make recovery measurable:** Compare resiliency score, latency, quorum, downtime loss, and MTTR across repeated drills instead of relying on intuition.
+- **Connect symptoms to fixes:** Move from a visible failure to a concrete code change, failure test, monitoring signal, and runbook in Remediation Studio.
+- **Create shared evidence:** Export a report that supports game days, onboarding, architecture reviews, and post-incident follow-up.
 
-### 1. 🔀 Multi-Topology Architecture Engine (3 Cockpits in 1)
-Switch between 3 teaching perspectives instantly:
-* **Microservice dependency mesh (7 services):** Gateway, auth, orders, payments, data, cache, and events.
-* **Multi-region traffic map (5 regions):** Simulated failover and latency changes across a global footprint.
-* **Raft-inspired consensus cluster (5 nodes):** Leader failure, elections, partitions, quorum loss, and recovery.
+The goal is not to reward engineers for clicking through a demo. It is to help teams practise safe decisions, expose gaps in resilience assumptions, and leave each rehearsal with an actionable next step.
 
-### 2. ⚡ Failure Propagation You Can See
-The simulation models common resilience patterns:
-* When a mission-critical dependency (like the Payment Gateway or DynamoDB) crashes, upstream services automatically trip their circuit breakers to **OPEN / TRIPPED**.
-* Protects the cluster from catastrophic cascading collapse and serves graceful cached fallbacks.
+## Productive, Profitable, Future-Ready
 
-### 3. 💰 Scenario-Based Business Impact
-The loss counter is an illustrative scenario estimate, not a production finance system:
-* **Revenue at Risk Rate ($/min):** Shows how different simulated failures change business exposure.
-* **Downtime Burn Accumulator:** Makes the cost of recovery delay visible during a drill.
+- **Productive:** Standardized drills give engineers a shared operating language, shorten onboarding, and turn incident practice into a repeatable workflow rather than a one-off presentation.
+- **Profitable:** Earlier detection of weak timeouts, cascading failures, cache stampedes, quorum risks, and regional failover gaps can reduce the duration and cost of real incidents. The simulator's loss ticker makes that business exposure visible; its dollar values are illustrative planning signals, not financial forecasts.
+- **Future-ready:** The same cockpit connects human decision-making, voice interaction, automated verification, observability signals, and remediation artifacts. It prepares teams for increasingly distributed systems without requiring access to production infrastructure.
 
-### 4. 📋 Rehearsal Report Export
-* Click **"Incident Report"** or say *"Export Report"*: ChaosWhisper compiles a **GitHub-Flavored Markdown rehearsal report** with the simulated timeline, quorum state, MTTR measurements, and follow-up ideas. It is evidence from the drill, not a compliance certification.
+For engineering leaders, this creates a practical reliability loop: **rehearse the risk, measure the response, apply the fix, and carry the evidence into the next review.**
 
-### 5. 🌐 Read-Only HTTP Resilience Probe
-* Input an HTTP/REST health endpoint and send a small GET burst to measure browser-observed latency, timeouts, and status codes. It does not mutate or attack the target service.
+## What Is Included
 
-### 6. 🎯 Readiness Board
-* Run repeatable checkout, leader-failover, and regional-failover rehearsals with explicit objectives.
-* Complete a drill only after restoring the simulation, then carry the evidence into the exported report.
-* This turns a flashy incident demo into a repeatable practice loop for onboarding, game days, and reliability reviews.
+### Incident Cockpit
 
-### 7. 🧰 SRE Remediation Studio (The Missing Engineering Bridge)
-Every failure triggers concrete engineering guidance instead of mere animation:
+The default cockpit combines the following workflows:
 
-1. **Problem Statement:** Exact customer-impacting behavior exposed by the failure.
-2. **Root Cause Analysis:** Thread starvation, retry amplification, quorum loss, or split-brain risk.
-3. **Production Code Patch:** Real copy-pasteable TypeScript/Node code (e.g. 800ms bounded timeout, circuit breaker fallback, Route 53 DNS shift, single-flight cache lock).
-4. **Automated Vitest/Jest Failure Test:** Test suite to add into CI/CD reproducing the fault condition.
-5. **Verification & Proof Signals:** Prometheus/Datadog metric alerts (e.g. Quorum < 3 alert, P99 < 900ms threshold) and an interactive **"Simulate Fix & Verify"** button to validate cluster resilience in real time.
+- **Readiness Board:** Six repeatable drills with objectives and completion tracking. A drill is certified after the simulated failure is restored.
+- **Live topology canvas:** Switch between three views: Microservices Mesh (7), AWS Global Cloud (5), and Raft Consensus (5).
+- **Metrics:** Resiliency score, Raft term and quorum, leader status, latency, average MTTR, DDoS state, and event history.
+- **Chaos controls:** Crash services, black out regions, isolate or crash Raft nodes, inject latency, trip breakers, run traffic floods, and force elections.
+- **Recovery:** `Heal All` restores all modeled services, regions, nodes, partitions, breakers, latency, and synthetic traffic state.
 
----
+### Remediation Studio
 
-## 🎙️ Spoken Chaos & Incident Rehearsal Commands
+Failure state automatically selects engineering guidance with:
 
-| Spoken Voice Command | Simulation Reaction | What to Show |
+1. Problem statement and customer impact
+2. Root-cause analysis
+3. Production code example
+4. Automated failure-test example
+5. Verification signals and an SRE runbook
+
+Plans can be copied or downloaded as Markdown. **Simulate Fix & Verify** applies a virtual resilience patch and restores the simulated environment; it does not change production code or infrastructure.
+
+### Read-Only HTTP Probe
+
+The HTTP Probe sends one or three browser `GET` requests to a URL, with a four-second timeout per request. It records status codes, browser-observed latency, failures, average latency, and pass rate.
+
+The probe is the only feature that contacts an external endpoint. The target must permit browser CORS requests; otherwise the result is reported as a CORS/network error. It sends no `POST`, `PUT`, `PATCH`, or `DELETE` requests and is not a load-testing or attack tool.
+
+### Incident Report
+
+Use **Incident Report** to generate a Markdown rehearsal report containing the event timeline, Raft state, MTTR history, resiliency score, completed readiness drills, and remediation follow-up. The report is evidence from the simulation, not a compliance certification.
+
+## Modeled Systems
+
+### Microservices Mesh
+
+The seven initial services and their IDs are:
+
+| ID | Service | Illustrative loss rate |
+| :--- | :--- | ---: |
+| `gateway` | Edge API Gateway | `$32,000/min` |
+| `auth` | Auth & IAM Service | `$14,000/min` |
+| `orders` | Order Engine | No direct loss rate |
+| `payments` | Payment Gateway | `$18,500/min` |
+| `database` | DynamoDB Cluster | `$24,000/min` |
+| `cache` | Redis Cache Layer | `$7,500/min` |
+| `kafka` | Kafka Event Bus | `$9,000/min` |
+
+The live risk ticker sums the configured service rates, `$12,500/min` for each offline region, and `$6,000/min` for each offline Raft node. The total outage-loss counter accumulates the current rate once per second during a drill.
+
+### Global Cloud
+
+The five modeled regions are `us-east-1`, `us-west-2`, `eu-west-1`, `ap-south-1`, and `ap-northeast-1`. The regional failover rehearsal takes `us-east-1` offline and provides a Route 53 low-TTL traffic-shift runbook.
+
+### Raft-Inspired Cluster
+
+The cluster contains five nodes, one leader, terms, heartbeats, elections, network isolation, synthetic DDoS traffic, and quorum tracking. Two offline nodes leave three survivors at the quorum boundary; three offline nodes lose quorum and trigger the collapse scenario.
+
+## Readiness Drills
+
+| Drill | Failure modeled | Recovery objective |
 | :--- | :--- | :--- |
-| *"Kill Payment Gateway"* / *"Payment drill"* | Drops simulated payment service | 800ms bounded timeout & fallback guidance |
-| *"Trip Circuit Breaker"* / *"Breaker drill"* | Opens simulated breakers | Fast-fail test suite & synthetic fallback |
-| *"Two node drill"* | Kills 2 out of 5 Raft nodes | Quorum margin boundary & surviving majority vote |
-| *"Quorum drill"* / *"Quorum alert"* | Simulates 3-node loss (<3 quorum) | Split-brain prevention, write freeze, P0 alert |
-| *"Blackout US East"* / *"Region drill"* | Takes `us-east-1` offline | Route 53 low-TTL DNS failover runbook |
-| *"Black Friday Drill"* | Injects 150k RPS flood | Redis cache stampede single-flight lock |
-| *"Verify fix"* / *"Simulate fix"* | Injects virtual resilience patch | 100% recovery verification and SLO certification |
-| *"Status report"* | Reads current simulation state | Resiliency score and degraded dependencies |
-| *"What is our blast radius?"* | Calculates degradation % | Impact assessment and risk rate |
-| *"What is our financial loss?"* | Reads illustrative scenario exposure | Downtime cost accumulator |
-| *"Heal cluster"* / *"Restore all"* | Restores modeled components | Recovery and clean operational state |
+| Payment Timeout | Payment Gateway failure | Bounded 800ms timeout and order fallback |
+| Circuit Breaker Fallback | Dependency saturation | Open breakers and verify synthetic fallback |
+| Two-Node Consensus | Two Raft nodes offline | Safely elect Term N+1 with three survivors |
+| Quorum Collapse | Three Raft nodes offline | Fence writes and prevent split brain |
+| Regional Failover | `us-east-1` blackout | Shift traffic toward `us-west-2` |
+| Black Friday 150k RPS | Traffic storm and cache stampede | Exercise cache, database, and recovery behavior |
 
----
+## Voice and Text Commands
 
-## 🛠️ Tech Stack
-* **Frontend:** React 18, Tailwind CSS, Lucide Enterprise Icons
-* **Simulation Engine:** Raft-inspired consensus state machine, multi-topology dependency graph, circuit breaker state controller
-* **Audio Synthesis:** Web Audio API (Zero-asset procedural oscillators & sound FX)
-* **Voice AI Plane:** Web Speech API & Wispr Flow Speech-to-Intent Parser
-* **Build Tool:** Vite
+Voice input is optional. Use the command field when speech recognition is unavailable. Examples include:
 
----
+| Command | Result |
+| :--- | :--- |
+| `Kill Payment Gateway` or `Payment drill` | Take `payments` offline |
+| `Kill Redis` or `Kill Kafka` | Take `cache` or `kafka` offline |
+| `Trip Circuit Breaker` | Trip Orders and Payments breakers |
+| `Crash Leader` or `Leader drill` | Fail the current Raft leader and start election behavior |
+| `Two node drill` | Take two Raft nodes offline |
+| `Quorum drill` | Trigger sequential three-node failure |
+| `Blackout US East` or `Region drill` | Take `us-east-1` offline |
+| `Black Friday Drill` | Start the 150k RPS traffic drill |
+| `Inject latency` or `DDoS` | Add synthetic latency or traffic pressure |
+| `Status report` | Speak the current score and degraded state |
+| `What is our financial loss?` | Speak current rate and accumulated loss |
+| `Verify fix` or `Simulate fix` | Apply the virtual patch and verify recovery |
+| `Heal cluster` or `Restore all` | Restore the modeled environment |
 
-## 🚀 Quickstart
+Voice speed can be changed with `Speed 1`, `Speed 1.5`, or `Speed 2.5`. Topology can be changed with `Microservices`, `AWS`, or `Raft`.
+
+## Run Locally
+
+Requirements: Node.js and npm.
 
 ```bash
-# Clone the repository
-git clone https://github.com/soumyalimje/chaos-whisper.git
-cd chaos-whisper
-
-# Install dependencies
+git clone https://github.com/soumyalimje/ChaosWhisper.git
+cd ChaosWhisper
 npm install
-
-# Start development server
 npm run dev
 ```
 
-Open `http://localhost:3000`. The Vite server is configured to use port `3000`. Chrome, Edge, and Brave support the optional Web Speech API; the text command field always works as a fallback.
+Open `http://localhost:3000`. Available scripts:
 
----
+```bash
+npm run dev       # Start the Vite development server
+npm run build     # Create a production build
+npm run preview   # Serve the production build locally
+```
 
-## 🧠 Built for Wispr Flow
-This project was conceptualized, designed, and iterated **using Wispr Flow** for hands-free voice-driven software engineering. Wispr Flow is an input method for the demo, not a runtime dependency.
+Chrome, Edge, and Brave provide the best support for the optional Web Speech API. Browser audio and speech permissions may be required. Wispr Flow was used during development but is not a runtime dependency.
+
+## Technology
+
+- React 18 and Vite
+- Tailwind CSS utilities and Lucide icons
+- Web Speech API for optional recognition and browser speech synthesis for responses
+- Web Audio API for procedural alert, click, and recovery sounds
+- React state-based simulation with SVG topology visualization
