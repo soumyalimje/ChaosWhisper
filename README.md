@@ -8,6 +8,10 @@ It helps teams spend less time guessing during incidents and more time making pr
 
 The simulation is intentionally non-production. It does not connect to, mutate, or deploy changes to cloud infrastructure. Business-impact numbers are illustrative estimates, not financial reporting.
 
+![ChaosWhisper incident cockpit](docs/chaoswhisper-cockpit.png)
+
+*The incident cockpit combines readiness drills, live system state, remediation guidance, and reportable evidence in one workspace.*
+
 ## Why It Matters to Engineers
 
 ChaosWhisper gives engineers a repeatable place to practise the work that is hardest to simulate during a calm day:
